@@ -1,0 +1,11 @@
+{
+  "name" : "writeCapture",
+  "description" : "Utility for Ajax loading of HTML containing script tags that use document.write",
+  "url" : "http://iamnoah.github.com/writeCapture/",
+  "keywords" : ["ajax","document.write","client", "browser"],
+  "author" : "Noah Sloan <noah.sloan@gmail.com>",
+  "maintainer" : "Noah Sloan <noah.sloan@gmail.com>",
+  "contributors" : [],
+  "dependencies" : ["jquery"],
+  "lib" : "."
+}

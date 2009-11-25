@@ -1,0 +1,7 @@
+task minify << {	
+	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
+		arg(value:'-o')
+		arg(value:'writeCapture-min.js')
+		arg(value:'writeCapture.js')		
+	}
+}
