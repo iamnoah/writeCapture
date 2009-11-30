@@ -187,6 +187,12 @@
 			"FooBarbArexternal barbArBarBaz");
 	});
 	
+	test("nested - no xdomain", function() {
+		testSanitize(
+			'Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"baz.js\\"> </scr"+"ipt>Bar");</script>Baz',
+			"FooBarbArFoobArBarBaz",true);
+	});
+	
 	test("nested asyncAll", function() {
 		testSanitize(
 				'Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"bar.js\\"> </scr"+"ipt>Bar");</script>Baz',

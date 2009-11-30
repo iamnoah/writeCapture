@@ -55,7 +55,7 @@
 		},
 		resume: function() {
 			this._paused = false;
-			this._next();
+			this._next(true);
 		},
 		_register: function(child) {
 			this._children.push(child);
@@ -66,8 +66,7 @@
 				return c._isPaused();
 			}
 		},
-		_next: function() {
-			// TODO why is the defer necessary? is it safe(deterministic)? i.e., could we ever have two timeouts at the same time? [testing says no, needs a proof]
+		_next: function(resuming) {
 			var next;
 			if(!this._isPaused()) {
 				if ((next = this._queue.shift())) {
@@ -75,7 +74,12 @@
 					this._next();
 				} else if(this._parent) {
 					// !paused and queue is empty, so let parent queue resume running
-					defer(this._parent,'_next');
+					if(resuming) {
+						// TODO why is the defer necessary? is it safe(deterministic)? i.e., could we ever have two timeouts at the same time? [testing says no, needs a proof]
+						defer(this._parent,'_next');
+					} else {
+						this._parent._next();
+					}
 				}
 			}
 		}
