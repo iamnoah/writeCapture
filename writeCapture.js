@@ -68,13 +68,13 @@
 		},
 		_next: function() {
 			// TODO why is the defer necessary? is it safe(deterministic)? i.e., could we ever have two timeouts at the same time? [testing says no, needs a proof]
-			var next, _this = this;
+			var next;
 			if(!this._isPaused()) {
 				if ((next = this._queue.shift())) {
 					next();
-					defer(this,'_next');
+					this._next();
 				} else if(this._parent) {
-					// !paused and queue is empty
+					// !paused and queue is empty, so let parent queue resume running
 					defer(this._parent,'_next');
 				}
 			}
