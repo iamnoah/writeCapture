@@ -1,5 +1,7 @@
 /**
  * @author noah <noah.sloan@gmail.com>
+ * 
+ * TODO decouple from jQuery? need ajax, replaceWith (innerHTML w/ script eval), each and isFunction
  */
 
 // hide eval in another scope so all our internals aren't exposed
