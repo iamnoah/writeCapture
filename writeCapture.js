@@ -1,4 +1,6 @@
 /**
+ * writeCapture.js v0.2.0-SNAPSHOT
+ *
  * @author noah <noah.sloan@gmail.com>
  * 
  * TODO decouple from jQuery? need ajax, replaceWith (innerHTML w/ script eval), each and isFunction

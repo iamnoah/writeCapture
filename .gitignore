@@ -2,4 +2,4 @@
 .settings
 .DS_Store
 writeCapture.tmproj
-writeCapture-min.js
+writeCapture*-min.js

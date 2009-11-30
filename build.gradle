@@ -1,7 +1,40 @@
-task minify << {	
+defaultTasks 'minify'
+
+def VERSION_LINE = / \* writeCapture\.js v((\d+)\.(\d+)\.(\d+)(-SNAPSHOT)?)/
+
+task upVersion << {
+	def script = new File('writeCapture.js')
+	def text = script.text.replaceAll(VERSION_LINE) { line, v, major, minor, fix, snapshot ->
+		if(!snapshot) {
+			// if snapshot wasn't in there, increment the version number
+			fix = fix.toInteger() + 1
+		}
+ 		" * writeCapture.js v${major}.${minor}.${fix}"
+	}
+	script.write(text)
+}
+
+def getVersion = {
+	(new File('writeCapture.js').filterLine { 
+		it =~ VERSION_LINE 
+	} =~ VERSION_LINE)[0][1]
+}
+
+def doMinify = {
 	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
 		arg(value:'-o')
-		arg(value:'writeCapture-min.js')
+		arg(value:"writeCapture-${getVersion()}-min.js")
 		arg(value:'writeCapture.js')		
 	}
+}
+
+task minify << doMinify
+
+task release(dependsOn:'upVersion') << {
+	doMinify() // putting minify in dependsOn causes it to run before upVersion... WTF?
+	def version = getVersion()
+	println "Releasing v${version}"
+	println "You should:"	
+	println "	git commit -am 'releasing version ${version}'"
+	println "	git tag -a v${version} -m tagging release v${version}"
 }
