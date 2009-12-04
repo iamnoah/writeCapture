@@ -1,4 +1,4 @@
-(function(jQuery,dwa) {
+(function($,dwa) {
 	var fn = dwa._forTest;
 	
 	module("support");
@@ -131,7 +131,9 @@
 	});
 	
 	module("sanitize");
-	function testSanitize(html,expected,sync,options) {
+	// safari 3.2.1 loads and executes xdomain scripts synchronously
+	var safari321 = $.browser.safari && $.browser.version === "525.27.1";
+	function testSanitize(html,expected,sync,options,safariBug) {
 		expect(3);
 		if(!sync) $.ajaxSettings.cache = true;
 		var done = false;
@@ -144,7 +146,7 @@
 			equals($('#foo').text(),expected);
 			if(!sync) start(); 
 		}
-		equals(done,!!sync,"scripts sync");			
+		equals(done,!!sync || !!safariBug,"scripts sync");			
 	}
 	test("inline",function() {
 		testSanitize(
@@ -172,7 +174,7 @@
 	test("all", function() {
 		testSanitize(
 			'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script>',
-			"Fooexternal barBaz");
+			"Fooexternal barBaz",false,null,safari321);
 	});
 	
 	test("all asyncAll", function() {
@@ -184,7 +186,7 @@
 	test("nested", function() {
 		testSanitize(
 			'Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"bar.js\\"> </scr"+"ipt>Bar");</script>Baz',
-			"FooBarbArexternal barbArBarBaz");
+			"FooBarbArexternal barbArBarBaz",false,null,safari321);
 	});
 	
 	test("nested - no xdomain", function() {
@@ -196,7 +198,7 @@
 	test("nested asyncAll", function() {
 		testSanitize(
 				'Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"bar.js\\"> </scr"+"ipt>Bar");</script>Baz',
-		"FooBarbArexternal barbArBarBaz",false,{asyncAll: true});
+		"FooBarbArexternal barbArBarBaz",false,{asyncAll: true},safari321);
 	});
 	
 	module("sanitizeAll");
