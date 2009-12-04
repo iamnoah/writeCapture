@@ -28,10 +28,33 @@ def doMinify = {
 	}
 }
 
+def doConcat = {
+	ant.concat(destfile:'build-concat.tmp.js') {
+		fileset(dir:'support',includes:'nolib-support.js')
+		fileset(dir:'.',includes:'writeCapture.js')
+	}
+}
+
+task concat << doConcat
+
+def doMinifyNolib = {
+	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
+		arg(value:'-o')
+		arg(value:"writeCapture-${getVersion()}-nolib-min.js")
+		arg(value:'build-concat.tmp.js')		
+	}
+	ant.delete(file:'build-concat.tmp.js')
+}
+
+task minifyNolib(dependsOn:'concat') << doMinifyNolib
+
 task minify << doMinify
 
-task release(dependsOn:'upVersion') << {
-	doMinify() // putting minify in dependsOn causes it to run before upVersion... WTF?
+task release(dependsOn:['upVersion']) << {
+	// putting minify in dependsOn causes it to run before upVersion... WTF?
+	doMinify() 
+	doConcat()
+	doMinifyNolib()
 	def version = getVersion()
 	println "Releasing v${version}"
 	println "You should:"	
