@@ -23,7 +23,9 @@ than 1.5k when Packed and Gzipped.
 In these example, note that `writeCapture.sanitize` doesn't execute scripts, 
 the scripts are executed by jQuery and the browser when the HTML returned by 
 `sanitize` is inserted into the page via `html()`, `replaceWith()` or any 
-other jQuery HTML manipulation method.
+other jQuery HTML manipulation method. You don't have to use jQuery, but your
+library of choice does need to be able to execute scripts inside an HTML
+fragment.
 
 ## Inline and same domain scripts ##
 
@@ -87,14 +89,22 @@ executed immediately.
 
 # Dependencies #
 
-* jQuery. Developed using 1.3.2, but should work with most versions. Send 
-  feedback if you use a different version.
+writeCapture.js was developed using jQuery 1.3.2, but should work with most 
+versions. We recommend you use jQuery, because it's pretty great, however, 
+if that's not possible, there are a few options:
 
-## Using without jQuery ##
+## nolib-support ##
 
-Firstly, why aren't you using jQuery? Are you sure? Well if you're sure that 
-you don't want to have to include jQuery, then it isn't too hard to replace
-the support functions that writeCapture needs.
+support/nolib-support.js provides a bare bones implementation of the support
+functions jQuery would otherwise provide and only adds about 800 bytes when
+Gzipped. The combined file is still under 2.3k compressed, so this is generally
+the second best option to using jQuery.
+
+## Implementing writeCaptureSupport ##
+
+If you don't want to use jQuery and you already use 
+another Ajax library, chances are you can easily wrap it to provide the 
+functions writeCapture needs and save a few bytes.
 
 writeCapture needs 2 support functions. You provide them by defining a 
 `writeCaptureSupport` object:
@@ -125,7 +135,7 @@ script will be loaded and executed asynchronously via
 dataType will only be set to "script" if the script being loaded is on another 
 domain.
 
-The sucess callback should be passed the text of the script (if 
+The success callback should be passed the text of the script (if 
 dataType:"script", the text will not be used and can be omitted). The error
 callback should be passed 3 parameters, the third being the Error that occured.
 The first two parameters are ignored. Either success or error must eventually 
@@ -164,6 +174,8 @@ any script tags it contains must be executed.
    
    * Allowed replacement of support functions by defining writeCaptureSupport
    so writeCapture can be used without jQuery.
+
+   * Added nolib-support.js for using writeCapture without jQuery.
 
  * 0.1 - first release. Any content but a single script tag would result in 
    partially async execution thanks to an overuse of defer.
