@@ -4,28 +4,15 @@
  * @author noah <noah.sloan@gmail.com>
  * 
  */
-
-// hide eval in another scope so all our internals aren't exposed
-(function(g) {
-	function e(s) { eval(s); }
-	e.o = g._evil;
-	g._evil = e;	
-})(this);
-
-(function($,global) {
-	// undo our scope limiting eval hack
-	var doEvil = global._evil;
-	global._evil = doEvil.o;
-	
-	if(!$) {
-		// "jQuery is undefined" error should be clear enough
-		var jQuery = global.jQuery;
+(function($,global,doEvil) {
+	// ensure we have our support functions
+	$ = $ || (function(jQuery) {
 		/**
 		 * @name writeCaptureSupport
 		 *
 		 * The support functions writeCapture needs.
-		 */
-		$ = {
+		 */		
+		return {
 			/**
 			 * Takes an options parameter that must support the following:
 			 * {
@@ -49,7 +36,7 @@
 				jQuery(selector).replaceWith(content);
 			}
 		};
-	}
+	})(global.jQuery);
 	
 	// utilities
 	function each(array,fn) {
@@ -355,4 +342,4 @@
 		sanitizeAll: sanitizeAll
 	};
 	
-})(this.writeCaptureSupport,this);
+})(this.writeCaptureSupport,this,eval);
