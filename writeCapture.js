@@ -3,7 +3,6 @@
  *
  * @author noah <noah.sloan@gmail.com>
  * 
- * TODO decouple from jQuery? need ajax, replaceWith (innerHTML w/ script eval), each and isFunction
  */
 
 // hide eval in another scope so all our internals aren't exposed
@@ -18,15 +17,57 @@
 	var doEvil = global._evil;
 	global._evil = doEvil.o;
 	
+	if(!$) {
+		// "jQuery is undefined" error should be clear enough
+		var jQuery = global.jQuery;
+		/**
+		 * @name writeCaptureSupport
+		 *
+		 * The support functions writeCapture needs.
+		 */
+		$ = {
+			/**
+			 * Takes an options parameter that must support the following:
+			 * {
+			 * 	url: url,
+			 * 	type: 'GET', // all requests are GET
+			 * 	dataType: "script", // it this is set to script, script tag injection is expected, otherwise, treat as plain text
+			 * 	async: true/false, // local scripts are loaded synchronously by default
+			 * 	success: callback(text,status), // must not pass a truthy 3rd parameter
+			 * 	error: callback(xhr,status,error) // must pass truthy 3rd parameter to indicate error
+			 * }
+			 */
+			ajax: jQuery.ajax,
+			/**
+			 * @param {String jQuery Element} selector the element to replace.
+			 * writeCapture only needs the first matched element to be replaced.
+			 * @param {String} content the content to replace 
+			 * the matched element with. script tags must be evaluated/loaded 
+			 * and executed if present.
+			 */
+			replaceWith: function(selector,content) {
+				jQuery(selector).replaceWith(content);
+			}
+		};
+	}
+	
 	// utilities
+	function each(array,fn) {
+		for(var i =0, len = array.length; i < len; i++) { 
+			fn(array[i]); 
+		}
+	}	
+	function isFunction(o) {
+		return Object.prototype.toString.call(o) === "[object Function]";
+	}
 	function slice(array,start,end) {
 		return Array.prototype.slice.call(array,start || 0,end || array && array.length);		
 	}
 	function any(array,fn) {
 		var result = false;
-		$.each(array,check);
-		function check() {
-			return !(result = fn(this));
+		each(array,check);
+		function check(it) {
+			return !(result = fn(it));
 		}
 		return result;
 	}
@@ -114,7 +155,7 @@
 		console.error("Error",error,"executing code:",code);
 	}
 	
-	var logError = $.isFunction(global.console && console.error) ? 
+	var logError = isFunction(global.console && console.error) ? 
 			doLog : ignore;
 	
 	function captureWrite(code) {
@@ -164,7 +205,7 @@
 		// each HTML fragment has it's own queue
 		var queue = new Q(parentQ);
 		var done;
-		if($.isFunction(options)) {
+		if(isFunction(options)) {
 			done = options;
 			options = {};
 		} else {
@@ -172,7 +213,7 @@
 		}
 		options = options || {};
 		// if a done callback is passed, append a script to call it
-		if($.isFunction(done)) {
+		if(isFunction(done)) {
 			var doneId = nextId();
 			callbacks[doneId] = done;
 			html += '<script type="text/javascript">' + 
@@ -218,6 +259,10 @@
 					success: captureHtml	
 				});						
 			}
+			function logAjaxError(xhr,status,error) {
+				logError("<XHR for "+src+">",error);
+				queue.resume();
+			}
 			function loadAsync() {
 				queue.pause();
 				$.ajax({
@@ -225,15 +270,11 @@
 					type: 'GET',
 					async: true,
 					success: captureAndResume,
-					error: captureAndResume
+					error: logAjaxError
 				});	
-				function captureAndResume(script,status,error) {
+				function captureAndResume(script,status) {
 					try {
-						if(error) {
-							logError("<XHR for "+src+">",error);
-						} else {
-							captureHtml(script);
-						}
+						captureHtml(script);
 					} catch(e) {
 						logError(script,e);
 					} finally {
@@ -249,13 +290,9 @@
 					type: 'GET',
 					dataType: "script",
 					success: captureAndResume,
-					error: captureAndResume
+					error: logAjaxError
 				});
 				function captureAndResume(xhr,st,error) {
-					if(error) {
-						logError("<XHR for "+src+">",error);
-					}
-					// success or failure, have to resume processing
 					html(uncapture(state));
 					queue.resume();
 				}
@@ -264,7 +301,7 @@
 				html(captureWrite(script));
 			}
 			function html(markup,done) {
-				$('#'+divId).replaceWith(sanitize(markup,done,queue));
+				$.replaceWith('#'+divId,sanitize(markup,done,queue));
 			}
 			return openTag + TEMPLATE.replace(/%d/,id) + 
 				'</script><div style="display: none" id="'+divId+'"></div>';
@@ -289,12 +326,11 @@
 		// create a queue for these fragments and make it the parent of each 
 		// sanitize call
 		var queue = new Q();
-		$.each(fragments,enqueue);
-		function enqueue() {
-			var f = this;
+		each(fragments,enqueue);
+		function enqueue(f) {
 			queue.push(runAndReplace);
 			function runAndReplace() {
-				$(f.selector).replaceWith(sanitize(f.html,f.options,queue));				
+				$.replaceWith(f.selector,sanitize(f.html,f.options,queue));				
 			}
 		}
 		queue.push(done);
@@ -319,4 +355,4 @@
 		sanitizeAll: sanitizeAll
 	};
 	
-})(jQuery,this);
+})(this.writeCaptureSupport,this);

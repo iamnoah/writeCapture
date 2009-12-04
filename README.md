@@ -70,26 +70,73 @@ executed immediately.
 ## Multiple HTML Fragments ##
 
     /*
- 		$('body).html() === 
- 		'<div id="foo"> </div><div id="bar"> </div>'
-	*/
+    	$('body).html() === 
+    	'<div id="foo"> </div><div id="bar"> </div>'
+    */
     
     wrapCapture.sanitizeAll([{
-		html: html1, selector: '#foo'
-	},{	
-		html: html2, selector: '#bar'	
-	}],function() {
-		/* 
-			$('body).html() === 
-			'<div>Some HTML with scripts in it.</div><div>Some HTML with a script on another domain.</div>';
-		*/
-	});
+    	html: html1, selector: '#foo'
+    },{	
+    	html: html2, selector: '#bar'	
+    }],function() {
+    	/*
+    		$('body).html() === 
+    		'<div>Some HTML with scripts in it.</div><div>Some HTML with a script on another domain.</div>';
+    	*/
+    });
 
 # Dependencies #
 
 * jQuery. Developed using 1.3.2, but should work with most versions. Send 
-  feedback if you use a different version. Future releases may allow for 
-  pluggable support functions so you don't need jQuery.
+  feedback if you use a different version.
+
+## Using without jQuery ##
+
+Firstly, why aren't you using jQuery? Are you sure? Well if you're sure that 
+you don't want to have to include jQuery, then it isn't too hard to replace
+the support functions that writeCapture needs.
+
+writeCapture needs 2 support functions. You provide them by defining a 
+`writeCaptureSupport` object:
+
+    window.writeCaptureSupport = {
+    	ajax: function(options) { /*...*/ },
+    	replaceWith: function(selector,content) { /*...*/ }
+    };
+
+### `ajax` ###
+
+`ajax` must provide a subset of the functionality of 
+[jQuery.ajax](http://docs.jquery.com/Ajax/jQuery.ajax#options). The following
+options are used:
+    {
+    	url: url, // the url to load
+    	type: 'GET', // will always be GET
+    	dataType: "script", // will be "script" or undefined
+    	async: true/false,
+    	success: callback(text), // called on sucess
+    	error: callback(xhr,status,error) // called on error
+    }
+
+Implementations can assume that type is always GET, but the parameter will be 
+passed regardless. If dataType === "script", then it is assumed that the 
+script will be loaded and executed asynchronously via 
+[script tag injection](http://jaybyjayfresh.com/2007/09/17/using-script-tags-to-do-remote-http-calls-in-javascript/).
+dataType will only be set to "script" if the script being loaded is on another 
+domain.
+
+The sucess callback should be passed the text of the script (if 
+dataType:"script", the text will not be used and can be omitted). The error
+callback should be passed 3 parameters, the third being the Error that occured.
+The first two parameters are ignored. Either success or error must eventually 
+be called for each call to `ajax`.
+
+### `replaceWith` ###
+
+`replaceWith` is equivalent to jQuery's 
+[replaceWith](http://docs.jquery.com/Manipulation/replaceWith#content).
+The key feature is that the second parameter will always be an HTML string and
+any script tags it contains must be executed.
 
 # Caveats/Limitations #
  
@@ -110,8 +157,13 @@ executed immediately.
 
 # Version History #
  
- * 0.2.0-SNAPSHOT - Only tasks that were running async (read: async script 
+ * 0.2.0-SNAPSHOT 
+   
+   * Only tasks that were running async (read: async script 
    loading with pause/resume) will result in a call to defer.
+   
+   * Allowed replacement of support functions by defining writeCaptureSupport
+   so writeCapture can be used without jQuery.
 
  * 0.1 - first release. Any content but a single script tag would result in 
    partially async execution thanks to an overuse of defer.
