@@ -167,7 +167,7 @@ any script tags it contains must be executed.
 
 # Version History #
  
- * 0.2.0-SNAPSHOT 
+ * 0.2.0 
    
    * Only tasks that were running async (read: async script 
    loading with pause/resume) will result in a call to defer.
