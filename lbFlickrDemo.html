@@ -1,9 +1,46 @@
 <html>
 	<head>
 		<title>writeCapture.js - Lightboxish Flickr Badges Demo</title>
-		
+		<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/reset/reset-min.css">
+		<link rel="stylesheet" href="css/jquery-ui-1.7.2.custom.css" type="text/css" media="screen" charset="utf-8">	
+		<link rel="stylesheet" href="css/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"> </script>		
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"> </script>		
+		<script type="text/javascript" src="http://cloud.github.com/downloads/iamnoah/writeCapture/writeCapture-0.2.0-min.js"> </script>
+		<script src="js/flickrDemo.js" type="text/javascript" charset="utf-8"></script>
 	</head>
 	<body>
-		
+		<p>
+			This page demonstrates how to dynamically load a Flickr badge using 
+			<a href="http://github.com/iamnoah/writeCapture">writeCapture.js</a>.
+		</p>
+		<p>Why do you need a library to load a Flickr badge? Because the 
+			<a href="http://www.elliotswan.com/2006/08/06/custom-flickr-badge-api-documentation/">Flickr Badge script</a>
+			uses the most evil of JavaScript methods: <code>document.write</code>, 
+			which will wipe out the entire page if loaded dynamically.
+			Don't believe me? Go ahead and try the link below, and see how it opens
+			up a nice dialog and dynamically loads the HTML containing the 
+			Flickr Badge.
+		</p>
+		<p><a href="#" class="openDialog">Show photos</a></p>		
+		<p>Now <a href="lbFlickrDemo.html?sanitize=false">try this page without 
+			writeCapture.js</a>. Loading the badge wipes out everything in the 
+			document, leaving you with just the images. Not much fun, is it?</p>
+		<p>If you view the <a href="js/flickrDemo.js">source</a>, you'll see there is only one 
+			small difference between the version using writeCapture, and the 
+			one without:</p>
+		<pre>
+						
+	// without
+	dialog.html(html);
+	// with
+	dialog.html(writeCapture.sanitize(text));</pre>
+		<p>One little call to <code>writeCapture.sanitize</code> makes the 
+			HTML safe. The whole library is less than 2k compressed and has
+			been extensively tested to cover all possible edge cases, so
+			there is really no reason not to use it. Enjoy!</p>
+		<div id="dialog" style="display: none">
+			<img class="spinner" src="css/ajax-loader.gif">
+		</div>
 	</body>
 </html>

@@ -1,0 +1,7 @@
+.spinner { display: none; }
+.loading .spinner { display: block; margin: 150px auto auto; }
+.photos .flickr_badge_image { float: left; margin: 1em; }
+body { font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif; margin: 2em; }
+p { margin-top: 1em; }
+h1 { font-size: 2em; }
+ul li { list-style: disc inside none; margin-top: 1em;}
