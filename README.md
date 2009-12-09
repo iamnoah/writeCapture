@@ -94,6 +94,15 @@ same functions in jQuery. `html` sanitizes the content and replaces the given
 element's innerHTML. `replaceWith` sanitizes and replaces the entire element
 with the result.
 
+`writeCapture.load` is similar to jQuery's load method but does not currently
+support using a selector to filter what is injected. The content from the 
+given URL will be sanitized.
+
+    /*
+    	$('body).html() === 
+    	'<div id="foo"> </div><div id="bar"> </div>'
+    */    
+    
     writeCapture.html('#foo',html1,function() {
     	/*
 			$('body).html() === 
@@ -107,8 +116,16 @@ with the result.
     		'<div id="foo"><div>Some HTML with scripts in it.</div></div><div>Some HTML with a script on another domain.</div>';
     	*/    	
     });
+    
+    /*
+    	foo.php returns 
+    	<div>Some HTML with <script type="text/javascript">document.write("scripts");</script> in it.</div>
+    */
+    writeCapture.load('#foo','foo.php',function() {
+		// $('#foo').html() === '<div>Some HTML with scripts in it.</div>'	
+	});
 
-Note that both of these functions will work using nolib-support (see below),
+Note that all of these functions will work using nolib-support (see below),
 but only id based selectors will be supported. You can also pass the element
 itself. If jQuery is used, any jQuery selector is allowed, but only the 
 first matched element will be affected.
@@ -212,6 +229,8 @@ unsupported selector is given.
  * 0.2.1
    
    * Added `html` and `replaceWith` convenience methods.
+
+   * Added `load` convenience method.
  
  * 0.2.0 
    

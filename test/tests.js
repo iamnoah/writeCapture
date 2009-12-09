@@ -225,6 +225,16 @@
 			});
 	});
 	
+	test("load",function() {
+		expect(1);
+		$.ajaxSettings.cache = true;
+		stop();		
+		dwa.load('#quxx','testLoad.html',function() {
+			equals($('#quxxx').text(),'FooBarbArexternal barbArBarBaz');
+			start();
+		});
+	});	
+	
 	module("sanitizeAll");
 	test("fragments",function() {
 		expect(3);

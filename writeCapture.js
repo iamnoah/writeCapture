@@ -329,7 +329,7 @@
 	}
 	
 	var name = 'writeCapture';
-	global[name] = {
+	var self = global[name] = {
 		_original: global[name],
 		noConflicts: function() {
 			global[name] = this._original;
@@ -350,7 +350,16 @@
 			var el = $.$(selector);
 			el.innerHTML ='<span/>';
 			$.replaceWith(el.firstChild,sanitize(content,options));
-		},		
+		},	
+		load: function(selector,url,options) {
+			$.ajax({
+				url: url,
+				type: "GET",
+				success: function(content) {
+					self.html(selector,content,options);
+				}
+			});
+		},
 		sanitize: sanitize,
 		sanitizeAll: sanitizeAll
 	};
