@@ -63,12 +63,9 @@
 				checkXhr();
 			}
 		},
+		$: $,
 		replaceWith: function(selector,content) {
-			selector = selector && selector.replace(/^\s*/,'').replace(/\s*$/,'');
-			if(!/^#[a-zA-Z0-9_:\.\-]+$/.test(selector)) {
-				throw "nolib-support only allows id based selectors. selector: "+selector;
-			}
-			var i, len, el = document.getElementById(selector.substring(1)),
+			var i, len, el = $(selector),
 				parent = el.parentNode || el.ownerDocument,
 				work = document.createElement('div'),
 				scripts = [],
@@ -86,6 +83,22 @@
 			}
 		}
 	};
+	
+	function isElement(o) {
+		return o && o.nodeType == 1;
+	}
+	
+	function $(s) {
+		if(isElement(s)) return s;
+		
+		// trim the selector
+		s = s && s.replace(/^\s*/,'').replace(/\s*$/,'');
+		
+		if(!/^#[a-zA-Z0-9_:\.\-]+$/.test(s)) 
+			throw "nolib-support only allows id based selectors. selector=" + s;
+		
+    	return document.getElementById(s.substring(1));
+	}
 	
 	var newXhr = global.ActiveXObject ? function() {
 		return new ActiveXObject("Microsoft.XMLHTTP");

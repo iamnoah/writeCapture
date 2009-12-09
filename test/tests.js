@@ -201,6 +201,30 @@
 		"FooBarbArexternal barbArBarBaz",false,{asyncAll: true},safari321);
 	});
 	
+	module("helpers");
+	test("html",function() {
+		expect(1);
+		stop();		
+		$.ajaxSettings.cache = true;
+		dwa.html('#foo',
+			'Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"bar.js\\"> </scr"+"ipt>Bar");</script>Baz',
+			function() {
+				equals($('#foo').text(),'FooBarbArexternal barbArBarBaz');
+				start();
+			});
+	});
+	test("replaceWith",function() {
+		expect(1);
+		$.ajaxSettings.cache = true;
+		stop();		
+		dwa.replaceWith('#qux',
+			'<div id="quxx">Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"bar.js\\"> </scr"+"ipt>Bar");</script>Baz</div>',
+			function() {
+				equals($('#quxx').text(),'FooBarbArexternal barbArBarBaz');
+				start();
+			});
+	});
+	
 	module("sanitizeAll");
 	test("fragments",function() {
 		expect(3);

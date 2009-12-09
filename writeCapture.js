@@ -26,6 +26,11 @@
 			 */
 			ajax: jQuery.ajax,
 			/**
+			 * @param {String Element} selector an Element or selector
+			 * @return {Element} the first element matching selector
+			 */
+			$: function(s) { return jQuery(s)[0]; },
+			/**
 			 * @param {String jQuery Element} selector the element to replace.
 			 * writeCapture only needs the first matched element to be replaced.
 			 * @param {String} content the content to replace 
@@ -33,7 +38,7 @@
 			 * and executed if present.
 			 */
 			replaceWith: function(selector,content) {
-				jQuery(selector).replaceWith(content);
+				jQuery(jQuery(selector)[0]).replaceWith(content);
 			}
 		};
 	})(global.jQuery);
@@ -338,6 +343,14 @@
 			uncapture: uncapture,
 			captureWrite: captureWrite
 		},
+		replaceWith: function(selector,content,options) {
+			$.replaceWith(selector,sanitize(content,options));				
+		},
+		html: function(selector,content,options) {
+			var el = $.$(selector);
+			el.innerHTML ='<span/>';
+			$.replaceWith(el.firstChild,sanitize(content,options));
+		},		
 		sanitize: sanitize,
 		sanitizeAll: sanitizeAll
 	};

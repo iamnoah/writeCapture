@@ -87,6 +87,32 @@ executed immediately.
     	*/
     });
 
+## Convenience Functions ##
+
+`writeCapture.html` and `writeCapture.replaceWith` behave similarly to the 
+same functions in jQuery. `html` sanitizes the content and replaces the given 
+element's innerHTML. `replaceWith` sanitizes and replaces the entire element
+with the result.
+
+    writeCapture.html('#foo',html1,function() {
+    	/*
+			$('body).html() === 
+    		'<div id="foo"><div>Some HTML with scripts in it.</div></div><div id="bar"> </div>';
+    	*/    	
+    });
+
+    writeCapture.replaceWith('#bar',html2,function() {
+    	/*
+			$('body).html() === 
+    		'<div id="foo"><div>Some HTML with scripts in it.</div></div><div>Some HTML with a script on another domain.</div>';
+    	*/    	
+    });
+
+Note that both of these functions will work using nolib-support (see below),
+but only id based selectors will be supported. You can also pass the element
+itself. If jQuery is used, any jQuery selector is allowed, but only the 
+first matched element will be affected.
+
 # Dependencies #
 
 writeCapture.js was developed using jQuery 1.3.2, but should work with most 
@@ -106,11 +132,12 @@ If you don't want to use jQuery and you already use
 another Ajax library, chances are you can easily wrap it to provide the 
 functions writeCapture needs and save a few bytes.
 
-writeCapture needs 2 support functions. You provide them by defining a 
+writeCapture needs 3 support functions. You provide them by defining a 
 `writeCaptureSupport` object:
 
     window.writeCaptureSupport = {
     	ajax: function(options) { /*...*/ },
+		$: function(selector) { /* ... */ },
     	replaceWith: function(selector,content) { /*...*/ }
     };
 
@@ -119,6 +146,7 @@ writeCapture needs 2 support functions. You provide them by defining a
 `ajax` must provide a subset of the functionality of 
 [jQuery.ajax](http://docs.jquery.com/Ajax/jQuery.ajax#options). The following
 options are used:
+
     {
     	url: url, // the url to load
     	type: 'GET', // will always be GET
@@ -146,7 +174,21 @@ be called for each call to `ajax`.
 `replaceWith` is equivalent to jQuery's 
 [replaceWith](http://docs.jquery.com/Manipulation/replaceWith#content).
 The key feature is that the second parameter will always be an HTML string and
-any script tags it contains must be executed.
+any script tags it contains must be executed. For selector support, see `$` 
+below.
+
+### `$` ###
+
+Resolves a selector to a *single* element. At a minimum, ID based selectors
+must be supported. If an `Element` is passed, it should be returned unmodified. 
+This should be the same function used by `replaceWith` to resolve the element
+to replace.
+
+    writeCaptureSupport.$('#foo') == document.getElementById('foo')
+    writeCaptureSupport.$(document.body) == document.body
+
+This function (and `replaceWith`) should throw an informative error if an 
+unsupported selector is given.
 
 # Caveats/Limitations #
  
@@ -166,6 +208,10 @@ any script tags it contains must be executed.
   enough to use document.write, it's a possibility.
 
 # Version History #
+
+ * 0.2.1
+   
+   * Added `html` and `replaceWith` convenience methods.
  
  * 0.2.0 
    
