@@ -16,7 +16,7 @@ Fortunately for you, difficult is not impossible, and writeCapture.js has
 already written (and extensively tested) the difficult part for you. All 
 you have to do is give it the offending evil HTML and it will return nice
 clean HTML, safe for injection into the document. And it does it all in less
-than 1.5k when Packed and Gzipped.
+than 1.6k when Packed and Gzipped.
 
 # Usage #
 
@@ -140,7 +140,7 @@ if that's not possible, there are a few options:
 
 support/nolib-support.js provides a bare bones implementation of the support
 functions jQuery would otherwise provide and only adds about 800 bytes when
-Gzipped. The combined file is still under 2.3k compressed, so this is generally
+Gzipped. The combined file is still under 2.5k compressed, so this is generally
 the second best option to using jQuery.
 
 ## Implementing writeCaptureSupport ##
@@ -242,7 +242,7 @@ unsupported selector is given.
 
    * Added nolib-support.js for using writeCapture without jQuery.
 
-## 0.1 ## 
+## 0.1 ##
 
    * first release. Any content but a single script tag would result in 
    partially async execution thanks to an overuse of defer.
