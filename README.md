@@ -226,13 +226,13 @@ unsupported selector is given.
 
 # Version History #
 
- * 0.2.1
+## 0.2.1 ##
    
    * Added `html` and `replaceWith` convenience methods.
 
    * Added `load` convenience method.
  
- * 0.2.0 
+## 0.2.0 ##
    
    * Only tasks that were running async (read: async script 
    loading with pause/resume) will result in a call to defer.
@@ -242,5 +242,7 @@ unsupported selector is given.
 
    * Added nolib-support.js for using writeCapture without jQuery.
 
- * 0.1 - first release. Any content but a single script tag would result in 
+## 0.1 ## 
+
+   * first release. Any content but a single script tag would result in 
    partially async execution thanks to an overuse of defer.
