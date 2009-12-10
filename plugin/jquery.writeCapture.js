@@ -1,17 +1,84 @@
+/**
+ * jquery.writeCapture.js 
+ * 
+ * Note that this file only provides the jQuery plugin functionality, you still
+ * need writeCapture.js. The compressed version will contain both as as single
+ * file.
+ *
+ * @author noah <noah.sloan@gmail.com>
+ * 
+ */
 (function($,wc,noop) {
+	// methods that take HTML content (according to API)
 	var methods = {
-		load: load,
-		replaceWith: replaceWith,
 		html: html
 	};
+	// TODO wrap domManip instead?
+	$.each(['append', 'prepend', 'after', 'before', 'wrap', 'wrapAll', 'replaceWith',
+		'wrapInner'],function() { methods[this] = makeMethod(this); });
+	// methods that return a different jQuery instance (according to API)
+	// TODO wrap pushStack instead?
+	var reproxy = ['eq','filter','map','not','slice','add','children',
+		'closest','contents','find','next','nextAll','offsetParent',
+		'parent','parents','prev','prevAll','siblings','andSelf'];
 	
-	$.fn.writeCapture = function(method,content,options) {
-		var m = methods[method] || error(method);
+	function isString(s) {
+		return Object.prototype.toString.call(s) == "[object String]";
+	}
+	
+	function executeMethod(method,content,options,cb) {
+		if(arguments.length == 0) return proxyMethods.call(this);
+		
+		var m = methods[method];
 		if(method == 'load') {
-			return m.call(this,content,options);
+			return load.call(this,content,options,cb);
 		}
+		if(!m) error(method);
 		return doEach.call(this,content,options,m);
-	};
+	}
+	
+	$.fn.writeCapture = executeMethod;
+	
+	var PROXIED = '__writeCaptureJsProxied-fghebd__';
+	// inherit from the jQuery instance, proxying the HTML injection methods
+	// so that the HTML is sanitized
+	function proxyMethods() {
+		if(this[PROXIED]) return this;
+		
+		var jq = this;
+		function F() {
+			var _this = this, sanitizing = false;
+			this[PROXIED] = true;
+			$.each(methods,function(method) {
+				var _super = jq[method];
+				if(!_super) return;
+				_this[method] = function(content,options,cb) {
+					// if it's unsanitized HTML, proxy it
+					if(!sanitizing && isString(content)) {
+						try {
+							sanitizing = true;
+							return executeMethod.call(_this,method,content,
+								options,cb);
+						} finally {
+							sanitizing = false;
+						}
+					} 
+					return _super.apply(_this,arguments); // else delegate
+				};
+			});
+			// also wrap the result of methods that return a different jQuery
+			$.each(reproxy,function() {
+				var _super = jq[this];
+				if(!_super) return;
+				_this[this] = function() {
+					return proxyMethods.call(_super.apply(_this,arguments));
+				};
+			});
+			this.endCapture = function() { return jq; };
+		}
+		F.prototype = jq;
+		return new F();
+	}
 	
 	function doEach(content,options,action) {
 		var done;
@@ -39,15 +106,21 @@
 		$(this).html(safe);
 	}
 	
-	function replaceWith(safe) {
-		$(this).replaceWith(safe);
+	function makeMethod(method) {
+		return function(safe) {
+			$(this)[method](safe);
+		};
 	}
 	
-	function load(url,options) {
+	function load(url,options,callback) {
 		var self = this,  selector, off = url.indexOf(' ');
 		if ( off >= 0 ) {
 			selector = url.slice(off, url.length);
 			url = url.slice(0, off);
+		}
+		if($.isFunction(callback)) {
+			options = options || {};
+			options.done = callback;
 		}
 		return $.ajax({
 			url: url,

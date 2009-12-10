@@ -3,3 +3,4 @@
 .DS_Store
 writeCapture.tmproj
 writeCapture*-min.js
+jquery.writeCapture*-min.js

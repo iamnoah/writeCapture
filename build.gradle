@@ -35,7 +35,15 @@ def doConcat = {
 	}
 }
 
+def doConcatPlugin = {
+	ant.concat(destfile:'plugin-concat.tmp.js') {		
+		fileset(dir:'.',includes:'writeCapture.js')
+		fileset(dir:'plugin',includes:'jquery.writeCapture.js')		
+	}
+}
+
 task concat << doConcat
+task concatPlugin << doConcatPlugin
 
 def doMinifyNolib = {
 	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
@@ -46,7 +54,18 @@ def doMinifyNolib = {
 	ant.delete(file:'build-concat.tmp.js')
 }
 
+def doMinifyPlugin = {
+	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
+		arg(value:'-o')
+		arg(value:"jquery.writeCapture-${getVersion()}-min.js")
+		arg(value:'plugin-concat.tmp.js')		
+	}
+	ant.delete(file:'plugin-concat.tmp.js')
+}
+
 task minifyNolib(dependsOn:'concat') << doMinifyNolib
+
+task minifyPlugin(dependsOn:'concatPlugin') << doMinifyPlugin
 
 task minify << doMinify
 
@@ -55,6 +74,8 @@ task release(dependsOn:['upVersion']) << {
 	doMinify() 
 	doConcat()
 	doMinifyNolib()
+	doConcatPlugin()
+	doMinifyPlugin()	
 	def version = getVersion()
 	println "Releasing v${version}"
 	println "You should:"	
