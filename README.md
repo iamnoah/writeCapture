@@ -21,7 +21,7 @@ than 1.6k when Packed and Gzipped.
 # Usage #
 
 The easiest way to use writeCapture is through the 
-[jQuery plugin](tree/master/plugin/). The remainder of this documentation will 
+[jQuery plugin](./tree/master/plugin/). The remainder of this documentation will 
 describe somewhat lower level use cases and go into the finer details of the 
 library.
 
