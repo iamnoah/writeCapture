@@ -20,7 +20,12 @@ than 1.6k when Packed and Gzipped.
 
 # Usage #
 
-In these example, note that `writeCapture.sanitize` doesn't execute scripts, 
+The easiest way to use writeCapture is through the 
+[jQuery plugin](tree/master/plugin/). The remainder of this documentation will 
+describe somewhat lower level use cases and go into the finer details of the 
+library.
+
+In the examples below, note that `writeCapture.sanitize` doesn't execute scripts,
 the scripts are executed by jQuery and the browser when the HTML returned by 
 `sanitize` is inserted into the page via `html()`, `replaceWith()` or any 
 other jQuery HTML manipulation method. You don't have to use jQuery, but your
@@ -235,6 +240,8 @@ unsupported selector is given.
 ## 0.3.0 ##
   
    * Replaced `sanitizeAll` with `sanitizeSerial`.
+
+   * Created jQuery plugin.
 
 ## 0.2.1 ##
    
