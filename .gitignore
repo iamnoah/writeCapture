@@ -1,2 +1,4 @@
 .DS_Store
-
+build.gradle
+README.md
+plugin/README.md
