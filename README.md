@@ -71,15 +71,21 @@ executed immediately.
     
 ## Multiple HTML Fragments ##
 
+When you have multiple HTML fragments, it can be important that they are run 
+in order. Any time you have more than one sanitize operations to run, you 
+should use `writeCapture.sanitizeSerial`. If will take care of linking the 
+actions together so that each runs only after the previous sanitize 
+operation has finished:
+
     /*
     	$('body).html() === 
     	'<div id="foo"> </div><div id="bar"> </div>'
     */
     
-    wrapCapture.sanitizeAll([{
-    	html: html1, selector: '#foo'
+    wrapCapture.sanitizeSerial([{
+    	html: html1, action: function(html) { $('#foo').replaceWith(html); }
     },{	
-    	html: html2, selector: '#bar'	
+    	html: html2, function(html) { $('#bar').replaceWith(html); }
     }],function() {
     	/*
     		$('body).html() === 
@@ -217,14 +223,18 @@ unsupported selector is given.
   utilize the done() callback.
  
 * Because of the asynchronous loading, attempting to sanitize a second HTML 
-  fragment before the first is done can have undefined results. Use sanitizeAll
-  if you have multiple HTML fragments to load.
+  fragment before the first is done can have undefined results. Use 
+  `sanitizeSerial` if you have multiple HTML fragments to load.
   
 * Scripts that assume that they are the last element in the document will 
   probably not function properly. This is rare, but if a script is uncouth 
   enough to use document.write, it's a possibility.
 
 # Version History #
+
+## 0.3.0 ##
+  
+   * Replaced `sanitizeAll` with `sanitizeSerial`.
 
 ## 0.2.1 ##
    

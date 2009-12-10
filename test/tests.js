@@ -240,14 +240,19 @@
 		expect(3);
 		stop();
 		$.ajaxSettings.cache = true;
-		dwa.sanitizeAll([{
-			selector: '#foo',
+		function fn(el) {
+			return function(content) {
+				$(el).replaceWith(content);
+			};
+		}
+		dwa.sanitizeSerial([{
+			action: fn('#foo'),
 			html: '<span class="foo"><script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script></span>'
 		},{
-			selector: '#bar',
+			action: fn('#bar'),
 			html: '<span class="bar">FooBarBaz</span>'
 		},{
-			selector: '#baz',
+			action: fn('#baz'),
 			html: '<span class="baz">Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"bar.js\\"> </scr"+"ipt>Bar");</script>Baz</span>'
 		}],done);
 		function done() {

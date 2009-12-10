@@ -1,5 +1,5 @@
 /**
- * writeCapture.js v0.2.2-SNAPSHOT
+ * writeCapture.js v0.3.0-SNAPSHOT
  *
  * @author noah <noah.sloan@gmail.com>
  * 
@@ -52,6 +52,9 @@
 	function isFunction(o) {
 		return Object.prototype.toString.call(o) === "[object Function]";
 	}
+	function isString(o) {
+		return Object.prototype.toString.call(o) === "[object String]";
+	}	
 	function slice(array,start,end) {
 		return Array.prototype.slice.call(array,start || 0,end || array && array.length);		
 	}
@@ -179,6 +182,20 @@
 		return (++global_id).toString();
 	}
 	
+	function normalizeOptions(options,callback) {
+		var done;
+		if(isFunction(options)) {
+			done = options;
+			options = null;
+		}
+		options = options || {};
+		done = done || options && options.done;
+		options.done = callback ? function() {
+			callback(done);
+		} : done;
+		return options;
+	}
+	
 	/**
 	 * Sanitize the given HTML so that the scripts will execute with a modified
 	 * document.write that will capture the output and append it in the 
@@ -196,14 +213,9 @@
 	function sanitize(html,options,parentQ) {
 		// each HTML fragment has it's own queue
 		var queue = new Q(parentQ);
-		var done;
-		if(isFunction(options)) {
-			done = options;
-			options = {};
-		} else {
-			done = options && options.done;
-		}
-		options = options || {};
+		options = normalizeOptions(options);
+		var done = options.done;
+		
 		// if a done callback is passed, append a script to call it
 		if(isFunction(done)) {
 			var doneId = nextId();
@@ -301,37 +313,39 @@
 	}
 	
 	/**
-	 * Sanitizes all the given fragments and replaces the given element with
-	 * the result. The next fragment is not started until the previous fragment
+	 * Sanitizes all the given fragments and calls action with the HTML.
+	 * The next fragment is not started until the previous fragment
 	 * has executed completely.
 	 * 
 	 * @param {Array} fragments array of objects like this:
 	 * {
 	 *   html: '<p>My html with a <script...',
-	 *   selector: '#anyValidJquerySelectorOrElement',
+	 *   action: function(safeHtml,frag) { doSomethingToInject(safeHtml); },
 	 *   options: {} // optional, see #sanitize
 	 * }
-	 * @param {Function} [done] if provided, called when all fragments have 
-	 * been processed.
+	 * Where frag is the object.
+	 * 
+	 * @param {Function} [done] Optional. Called when all fragments are done.
 	 */
-	function sanitizeAll(fragments,done) {
+	function sanitizeSerial(fragments,done) {
 		// create a queue for these fragments and make it the parent of each 
 		// sanitize call
 		var queue = new Q();
-		each(fragments,enqueue);
-		function enqueue(f) {
-			queue.push(runAndReplace);
-			function runAndReplace() {
-				$.replaceWith(f.selector,sanitize(f.html,f.options,queue));				
+		each(fragments, function (f) {
+			queue.push(run);
+			function run() {
+				f.action(sanitize(f.html,f.options,queue),f);
 			}
+		});
+		if(done) {
+			queue.push(done);		
 		}
-		queue.push(done);
 	}
 	
 	var name = 'writeCapture';
 	var self = global[name] = {
 		_original: global[name],
-		noConflicts: function() {
+		noConflict: function() {
 			global[name] = this._original;
 			return this;
 		},
@@ -361,7 +375,7 @@
 			});
 		},
 		sanitize: sanitize,
-		sanitizeAll: sanitizeAll
+		sanitizeSerial: sanitizeSerial
 	};
 	
 })(this.writeCaptureSupport,this,eval);
