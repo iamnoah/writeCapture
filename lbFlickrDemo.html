@@ -6,7 +6,9 @@
 		<link rel="stylesheet" href="css/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"> </script>		
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"> </script>		
-		<script type="text/javascript" src="http://cloud.github.com/downloads/iamnoah/writeCapture/writeCapture-0.2.0-min.js"> </script>
+		<script src="writeCapture.js" type="text/javascript" charset="utf-8"></script>
+		<script src="plugin/jquery.writeCapture.js" type="text/javascript" charset="utf-8"></script>
+		
 		<script src="js/flickrDemo.js" type="text/javascript" charset="utf-8"></script>
 	</head>
 	<body>
@@ -30,13 +32,10 @@
 			small difference between the version using writeCapture, and the 
 			one without:</p>
 		<pre>
-						
-	// without
-	dialog.html(html);
-	// with
-	dialog.html(writeCapture.sanitize(text));</pre>
-		<p>One little call to <code>writeCapture.sanitize</code> makes the 
-			HTML safe. The whole library is less than 2k compressed and has
+			
+dialog = dialog.writeCapture();</pre>
+		<p>Chaining HTML manipulation methods off of <code>writeCapture()</code>
+			makes them safe. The whole library is less than 2k compressed and has
 			been extensively tested to cover all possible edge cases, so
 			there is really no reason not to use it. Enjoy!</p>
 		<div id="dialog" style="display: none">
