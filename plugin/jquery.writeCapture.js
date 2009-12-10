@@ -81,7 +81,7 @@
 	}
 	
 	function doEach(content,options,action) {
-		var done;
+		var done, self = this;
 		if(options && options.done) {
 			done = options.done;
 			delete options.done;
@@ -97,7 +97,7 @@
 					action.call(el,text);
 				}
 			};
-		}),done);
+		}),done && function() { done.call(self); } || done);
 		return this;
 	}
 	

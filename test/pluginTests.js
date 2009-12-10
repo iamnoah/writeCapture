@@ -1,4 +1,5 @@
 (function($) {
+	// TODO need a lot more tests... could test all methods in a loop by matching script markup to result
 	
 	module("html");
 	test("inline",function() {
