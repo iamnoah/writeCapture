@@ -201,6 +201,40 @@
 		"FooBarbArexternal barbArBarBaz",false,{asyncAll: true},safari321);
 	});
 	
+	test("2x xdomain sanitize",function() {
+		expect(9);
+		var cb = [], original = dwa._forTest.$.ajax, order = 1,
+			expected = ['foo.js','bar.js','baz.js'], ajaxCount = 0;
+		stop();
+		dwa._forTest.$.ajax = function(options) {
+			var count = ajaxCount++;
+			equals(options.url,'http://someotherdomain.com/'+expected[count]);			
+			cb[count] = options.success;
+		};
+		$('#foo').html(dwa.sanitize('Foo<script type="text/javascript" src="http://someotherdomain.com/foo.js"></script>Baz',function() {
+			equals($('#foo').text(),'FooBarBaz');
+			equals(order++,1,"order");
+		}));
+		$('#bar').html(dwa.sanitize('Qux<script type="text/javascript" src="http://someotherdomain.com/bar.js"></script>Quxxx',function() {
+			equals($('#bar').text(),'QuxQuxxQuxxx');
+			equals(order++,2,"order");
+		}));
+		$('#baz').html(dwa.sanitize('<script type="text/javascript" src="http://someotherdomain.com/baz.js"></script>',function() {
+			equals($('#baz').text(),'Baz');
+			equals(order++,3,"order");
+			dwa._forTest.$.ajax = original;
+			start();
+		}));	
+		setTimeout(function() {	
+			document.write('Bar');
+			cb[0]();
+			document.write('Quxx');
+			cb[1]();			
+			document.write('Baz');
+			cb[2]();
+		},50);
+	});
+	
 	module("helpers");
 	test("html",function() {
 		expect(1);
@@ -248,7 +282,8 @@
 		dwa.sanitizeSerial([{
 			action: fn('#foo'),
 			html: '<span class="foo"><script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script></span>'
-		},{
+		}]);
+		dwa.sanitizeSerial([{
 			action: fn('#bar'),
 			html: '<span class="bar">FooBarBaz</span>'
 		},{

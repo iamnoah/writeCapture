@@ -196,6 +196,16 @@
 		return options;
 	}
 	
+	// The global Q synchronizes all sanitize operations. 
+	// The only time this synchronization is really necessary is when two or 
+	// more consecutive sanitize operations make async requests. e.g.,
+	// sanitize call A requests foo, then sanitize B is called and bar is 
+	// requested. document.write was replaced by B, so if A returns first, the 
+	// content will be captured by B, then when B returns, document.write will
+	// be the original document.write, probably messing up the page. At the 
+	// very least, A will get nothing and B will get the wrong content.
+	var GLOBAL_Q = new Q();
+	
 	/**
 	 * Sanitize the given HTML so that the scripts will execute with a modified
 	 * document.write that will capture the output and append it in the 
@@ -212,7 +222,7 @@
 	 */
 	function sanitize(html,options,parentQ) {
 		// each HTML fragment has it's own queue
-		var queue = new Q(parentQ);
+		var queue = parentQ && new Q(parentQ) || GLOBAL_Q;
 		options = normalizeOptions(options);
 		var done = options.done;
 		
@@ -330,7 +340,7 @@
 	function sanitizeSerial(fragments,done) {
 		// create a queue for these fragments and make it the parent of each 
 		// sanitize call
-		var queue = new Q();
+		var queue = GLOBAL_Q;
 		each(fragments, function (f) {
 			queue.push(run);
 			function run() {
@@ -352,6 +362,7 @@
 		// this is only for testing, please don't use these
 		_forTest: {
 			Q: Q,
+			$: $,
 			slice: slice,
 			capture: capture,
 			uncapture: uncapture,
