@@ -16,11 +16,6 @@
 	// TODO wrap domManip instead?
 	$.each(['append', 'prepend', 'after', 'before', 'wrap', 'wrapAll', 'replaceWith',
 		'wrapInner'],function() { methods[this] = makeMethod(this); });
-	// methods that return a different jQuery instance (according to API)
-	// TODO wrap pushStack instead?
-	var reproxy = ['eq','filter','map','not','slice','add','children',
-		'closest','contents','find','next','nextAll','offsetParent',
-		'parent','parents','prev','prevAll','siblings','andSelf'];
 	
 	function isString(s) {
 		return Object.prototype.toString.call(s) == "[object String]";
@@ -66,14 +61,10 @@
 					return _super.apply(_this,arguments); // else delegate
 				};
 			});
-			// also wrap the result of methods that return a different jQuery
-			$.each(reproxy,function() {
-				var _super = jq[this];
-				if(!_super) return;
-				_this[this] = function() {
-					return proxyMethods.call(_super.apply(_this,arguments));
-				};
-			});
+			// wrap pushStack so that the new jQuery instance is also wrapped
+			this.pushStack = function() {
+				return proxyMethods.call(jq.pushStack.apply(_this,arguments));
+			};
 			this.endCapture = function() { return jq; };
 		}
 		F.prototype = jq;
