@@ -126,16 +126,22 @@
 	function capture() {
 		var state = {
 			write: global.document.write,
+			writeln: global.document.writeln,
 			out: ''
 		};
 		global.document.write = replacementWrite;
+		global.document.writeln = replacementWriteln;	
 		function replacementWrite(s) {
 			state.out +=  s;
 		}
+		function replacementWriteln(s) {
+			state.out +=  s + '\n';
+		}		
 		return state;
 	}
 	function uncapture(state) {
 		global.document.write = state.write;
+		global.document.writeln = state.writeln;
 		return state.out;
 	}
 	

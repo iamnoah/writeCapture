@@ -154,6 +154,12 @@
 			"FooBarBaz",true);
 	});
 	
+	test("writeln",function() {
+		testSanitize(
+			'Foo<script type="text/javascript">document.writeln("Bar");</script>Baz',
+			"FooBar\nBaz",true);
+	});	
+	
 
 	test("external", function() {
 		testSanitize(
