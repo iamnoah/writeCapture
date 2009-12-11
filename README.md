@@ -226,10 +226,6 @@ unsupported selector is given.
   all scripts may have yet run after the HTML is injected. This means that if 
   your script depends on all the scripts in the HTML having run, it should 
   utilize the done() callback.
- 
-* Because of the asynchronous loading, attempting to sanitize a second HTML 
-  fragment before the first is done can have undefined results. Use 
-  `sanitizeSerial` if you have multiple HTML fragments to load.
   
 * Scripts that assume that they are the last element in the document will 
   probably not function properly. This is rare, but if a script is uncouth 
@@ -242,6 +238,9 @@ unsupported selector is given.
    * Replaced `sanitizeAll` with `sanitizeSerial`.
 
    * Created jQuery plugin.
+
+   * Run all sanitized scripts through a global queue to prevent problems when
+   multiple sanitizes with async loads are run in sequence.
 
 ## 0.2.1 ##
    
