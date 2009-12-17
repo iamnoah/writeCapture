@@ -4,8 +4,8 @@ The writeCapture.js jQuery plugin provides an easy way to utilize
 [writeCapture.js](http://github.com/iamnoah/writeCapture) the jQuery way. e.g.,
 
     $('#foo').writeCapture().load('someUrl.php',function() {
-		alert("loaded safely!");
-	}).html('Safe! - Loading').endCapture().html('Unsafe!');
+    	alert("loaded safely!");
+    }).html('Safe! - Loading').endCapture().html('Unsafe!');
 
 All HTML manipulations are proxied by the plugin and filtered through 
 writeCapture before injection, so all calls chained off of the call to 
@@ -39,3 +39,14 @@ arguments to `writeCapture()` and not bother with chaining:
 Here `doSomethingNormal()` is meant to indicate that any chained methods will
 not be proxied and/or sanitized as they would when chaining off of a 
 no-argument call to `writeCapture()`.
+
+## Low Level Support ##
+
+When using the plugin, the global `writeCapture` object will not be present. If
+you need to invoke either `sanitize` or `sanitizeSerial`, they are available as 
+methods off the jQuery object. e.g.,
+
+    var safeHtml = $.sanitize(unsafeHtml);
+
+If you come across a use case where the plugin is failing, this may help you 
+out, but also please consider filling an issue.
