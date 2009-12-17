@@ -1,4 +1,7 @@
 (function($,dwa) {
+	document.write = document.writeln = function() {
+		ok(false,"'real' document.write(ln) called!");
+	};
 	var fn = dwa._forTest;
 	
 	module("support");
