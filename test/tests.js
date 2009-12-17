@@ -1,4 +1,7 @@
 (function($,dwa) {
+	document.write = document.writeln = function() {
+		ok(false,"'real' document.write(ln) called!");
+	};
 	var fn = dwa._forTest;
 	
 	module("support");
@@ -153,6 +156,12 @@
 			'Foo<script type="text/javascript">document.write("Bar");</script>Baz',
 			"FooBarBaz",true);
 	});
+	
+	test("writeln",function() {
+		testSanitize(
+			'Foo<script type="text/javascript">document.writeln("Bar");</script>Baz',
+			"FooBar\nBaz",true);
+	});	
 	
 
 	test("external", function() {
