@@ -261,7 +261,11 @@
 					run = loadXDomain;
 				} else {
 					// can be loaded then eval()d
-					run = options.asyncAll ? loadAsync : loadSync; 
+					if(options.asyncAll) {
+						run = loadAsync();
+					} else {
+						run = loadSync; 
+					}					
 				}
 			} else {
 				// just eval code and be done
@@ -284,15 +288,13 @@
 				queue.resume();
 			}
 			function loadAsync() {
-				queue.pause();
-				$.ajax({
-					url: src,
-					type: 'GET',
-					async: true,
-					success: captureAndResume,
-					error: logAjaxError
-				});	
-				function captureAndResume(script,status) {
+				var ready, scriptText;
+				function captureAndResume(script,status) {					
+					if(!ready) {
+						// loaded before queue run, cache text
+						scriptText = script;
+						return;
+					}
 					try {
 						captureHtml(script);
 					} catch(e) {
@@ -301,6 +303,22 @@
 						queue.resume();
 					}
 				}
+				// start loading the text
+				$.ajax({
+					url: src,
+					type: 'GET',
+					async: true,
+					success: captureAndResume,
+					error: logAjaxError
+				});				
+				return function() {
+					ready = true;
+					if(scriptText) {
+						captureHtml(scriptText);
+					} else {
+						queue.pause();	
+					}
+				};
 			}
 			function loadXDomain(cb) {
 				var state = capture();
