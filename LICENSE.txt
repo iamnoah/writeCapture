@@ -1,0 +1,5 @@
+You may use this code under the terms of the GPLv2 or the MIT license, whichever you prefer. 
+The text of both licenses is included in this repository.
+
+Both licenses apply retroactively to all versions of this software available from 
+http://github.com/iamnoah/writeCapture
