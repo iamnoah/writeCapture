@@ -40,13 +40,17 @@ Here `doSomethingNormal()` is meant to indicate that any chained methods will
 not be proxied and/or sanitized as they would when chaining off of a 
 no-argument call to `writeCapture()`.
 
+## Hacks ##
+
+See [Hacks](http://github.com/iamnoah/writeCapture) in the core documentation.
+
 ## Low Level Support ##
 
 When using the plugin, the global `writeCapture` object will not be present. If
-you need to invoke either `sanitize` or `sanitizeSerial`, they are available as 
-methods off the jQuery object. e.g.,
+you need to invoke `sanitize`, tweak an option, or or something else, you can 
+access the core off the jQuery object. e.g.,
 
-    var safeHtml = $.sanitize(unsafeHtml);
+    var safeHtml = $.writeCapture.sanitize(unsafeHtml);
 
 If you come across a use case where the plugin is failing, this may help you 
 out, but also please consider filling an issue.

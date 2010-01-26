@@ -218,6 +218,24 @@ to replace.
 This function (and `replaceWith`) should throw an informative error if an 
 unsupported selector is given.
 
+# Hacks #
+
+## fixUrls - URLs with encoded ampersands ##
+
+A common hack used for browser compatibility goes something like this:
+
+    <script type="text/javascript"><!--
+       document.write('<scr'+'ipt type="text/javascript" src="http://foo.com/bar?baz=qux&amp;quxx=quxxx> </sc'+'ript>');
+    </script>
+
+You'll notice that the ampersand in the URL is encoded, which will prevent 
+writeCapture from loading the script correctly. To remedy this, all script URLs
+are run through `writeCapture.fixUrls(url)` which replaces encoded ampersands 
+with the real thing. It's possible that this could mess up a perfectly valid 
+URL, so you can replace the fixUrls function with one of your own or set it to
+`null` to prevent the hack all together. The function is passed the script URL
+and is expected to return the real path.
+
 # Caveats/Limitations #
  
 * If any of the included scripts are on another domain, they will have to be 
@@ -232,6 +250,14 @@ unsupported selector is given.
   enough to use document.write, it's a possibility.
 
 # Version History #
+
+## 0.3.1 ##
+ 
+  * Added fixUrls hack to deal with encoded URLs.
+ 
+  * Added MIT and GPL licenses, applied retroactively to all versions.
+
+  * Optimized script loading (start loading in parallel immediately) if asyncAll is enabled.
 
 ## 0.3.0 ##
   

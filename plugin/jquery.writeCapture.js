@@ -150,7 +150,6 @@
 		throw "invalid method parameter "+method;
 	}
 	
-	// expose sanitize
-	$.sanitize = wc.sanitize;
-	$.sanitizeSerial = wc.sanitizeSerial;
+	// expose core
+	$.writeCapture = wc;
 })(jQuery,writeCapture.noConflict());

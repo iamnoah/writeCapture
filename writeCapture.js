@@ -247,6 +247,12 @@
 			var id = nextId(), divId = DIV_PREFIX + id;
 			var run;
 			
+			// fix for the inline script that writes a script tag with encoded 
+			// ampersands hack (more comon than you'd think)
+			if(src && isFunction(self.fixUrls)) {
+			    src = self.fixUrls(src);
+			}
+			
 			callbacks[id] = queueScript;
 			function queueScript() {
 				queue.push(run);
@@ -379,6 +385,11 @@
 	var name = 'writeCapture';
 	var self = global[name] = {
 		_original: global[name],
+		/**
+		 */
+		fixUrls: function(src) {
+		    return src.replace(/&amp;/g,'&');
+		},
 		noConflict: function() {
 			global[name] = this._original;
 			return this;

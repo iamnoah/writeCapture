@@ -179,6 +179,12 @@
 		testSanitize('Foo<script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script>Baz',
 			"Fooexternal barBaz");
 	});
+	
+	
+	test("xdomain - encoded ampersand", function() {
+		testSanitize('Foo<script type="text/javascript"><!--\ndocument.write(\'<scri\'+\'pt type="text/javascript" src="http://noahsloan.com/writeCapture?blah&amp;foo=bar"> </s\'+\'cript>\');</script>Baz',
+			"Fooexternal barBaz");
+	});
 
 	test("all", function() {
 		testSanitize(
