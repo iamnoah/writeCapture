@@ -38,7 +38,17 @@
 			 * and executed if present.
 			 */
 			replaceWith: function(selector,content) {
-				jQuery(jQuery(selector)[0]).replaceWith(content);
+			    // jQuery 1.4? has a bug in replaceWith so we can't use it directly
+			    var el = jQuery(selector)[0];
+				var next = el.nextSibling, parent = el.parentNode;
+
+				jQuery(el).remove();
+
+				if ( next ) {
+					jQuery(next).before( content );
+				} else {
+					jQuery(parent).append( content );
+				}
 			}
 		};
 	})(global.jQuery);
