@@ -251,6 +251,11 @@ and is expected to return the real path.
 
 # Version History #
 
+## 0.3.2 ##
+
+ * Bugfix - jQuery 1.4.1 has a bug in replaceWith that mishandles strings. We 
+   work around it by not using replaceWith.
+
 ## 0.3.1 ##
  
   * Added fixUrls hack to deal with encoded URLs.
