@@ -133,10 +133,14 @@
 		}
 	});
 	
+	function h(html) {
+	    return html.replace(/</g,'&lt;').toLowerCase();
+	}
+	
 	module("sanitize");
 	// safari 3.2.1 loads and executes xdomain scripts synchronously
 	var safari321 = $.browser.safari && $.browser.version === "525.27.1";
-	function testSanitize(html,expected,sync,options,safariBug) {
+	function testSanitize(html,expected,sync,options,safariBug,testHtml) {
 		expect(3);
 		if(!sync) $.ajaxSettings.cache = true;
 		var done = false;
@@ -146,7 +150,7 @@
 		function finish(){ 
 			done = true; 
 			ok(done,"done called"); 
-			equals($('#foo').text(),expected);
+			equals(h($('#foo')[testHtml ? 'html' : 'text']()),h(expected));
 			if(!sync) start(); 
 		}
 		equals(done,!!sync || !!safariBug,"scripts sync");			
@@ -163,6 +167,11 @@
 			$("<div>FooBar\nBaz</div>").text(),true);
 	});
 
+	test("xhtml",function() {
+		testSanitize(
+			'Foo<script type="text/javascript">document.write(\'<span>Bar<input name="Bar"></span>\');</script>Baz',
+			$('<div/>').append('Foo<span>Bar<input name="Bar"/></span>Baz').html(),true,null,false,true);
+	});
 	
 
 	test("external", function() {
