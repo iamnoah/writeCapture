@@ -251,6 +251,15 @@ and is expected to return the real path.
 
 # Version History #
 
+## 0.3.3-SNAPSHOT ##
+
+ * BugFix -  We no longer mess with scripts that are not JavaScript. i.e., 
+   VBScript. Prevents some weird error cases.
+
+ * BugFix - Streamlined the handling of the done callback. Most notable effect
+   is that phantom invisible divs will be removed before done is called instead
+   of immediately after.
+
 ## 0.3.2 ##
 
  * Bugfix - jQuery 1.4.1 has a bug in replaceWith that mishandles strings. We 
