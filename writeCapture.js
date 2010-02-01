@@ -187,8 +187,10 @@
 		return parts && ( parts[1] && parts[1] != location.protocol || parts[2] != location.host );
 	}
 	
-	var SCRIPT_TAGS = /(<script(?:.|[\n\r])*?>)((?:.|[\n\r])*?)<\/script>/g, 
-		SRC_ATTR = /src="(.*?)"/,
+	var SCRIPT_TAGS = /(<script(?:.|[\n\r])*?>)((?:.|[\n\r])*?)<\/script>/ig, 
+		SRC_ATTR = /src="(.*?)"/i,
+		TYPE_ATTR = /type="(.*?)"/i,
+		LANG_ATTR = /language="(.*?)"/i,
 		GLOBAL = "__document_write_ajax_callbacks__",
 		DIV_PREFIX = "__document_write_ajax_div-",
 		TEMPLATE = "window['"+GLOBAL+"']['%d']();",
@@ -253,9 +255,18 @@
 		// themselves
 		return html.replace(SCRIPT_TAGS,proxyTag);
 		function proxyTag(element,openTag,code) {
-			var src = (SRC_ATTR.exec(openTag)||[])[1];
+			var src = (SRC_ATTR.exec(openTag)||[])[1],
+				type = (TYPE_ATTR.exec(openTag)||[])[1] || '',
+				lang = (LANG_ATTR.exec(openTag)||[])[1] || '',
+				// TODO what about jscript? others?
+				isJs = type.toLowerCase().indexOf('javascript') !== -1 || 
+					lang.toLowerCase().indexOf('javascript') !== -1;
 			var id = nextId(), divId = DIV_PREFIX + id;
 			var run;
+			
+			if(!isJs) {
+			    return element;
+			}
 			
 			// fix for the inline script that writes a script tag with encoded 
 			// ampersands hack (more comon than you'd think)
@@ -281,7 +292,7 @@
 						run = loadAsync();
 					} else {
 						run = loadSync; 
-					}					
+					}
 				}
 			} else {
 				// just eval code and be done
@@ -297,7 +308,7 @@
 					type: 'GET',
 					async: false,
 					success: captureHtml	
-				});						
+				});
 			}
 			function logAjaxError(xhr,status,error) {
 				logError("<XHR for "+src+">",error);
@@ -305,7 +316,7 @@
 			}
 			function loadAsync() {
 				var ready, scriptText;
-				function captureAndResume(script,status) {					
+				function captureAndResume(script,status) {
 					if(!ready) {
 						// loaded before queue run, cache text
 						scriptText = script;
@@ -414,7 +425,7 @@
 			captureWrite: captureWrite
 		},
 		replaceWith: function(selector,content,options) {
-			$.replaceWith(selector,sanitize(content,options));				
+			$.replaceWith(selector,sanitize(content,options));
 		},
 		html: function(selector,content,options) {
 			var el = $.$(selector);
