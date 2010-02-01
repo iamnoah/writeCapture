@@ -160,8 +160,9 @@
 	test("writeln",function() {
 		testSanitize(
 			'Foo<script type="text/javascript">document.writeln("Bar");</script>Baz',
-			"FooBar\nBaz",true);
-	});	
+			$("<div>FooBar\nBaz</div>").text(),true);
+	});
+
 	
 
 	test("external", function() {
