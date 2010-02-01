@@ -243,17 +243,23 @@
 		var queue = parentQ && new Q(parentQ) || GLOBAL_Q;
 		options = normalizeOptions(options);
 		var done = options.done;
+		var doneHtml = '';
 		
 		// if a done callback is passed, append a script to call it
 		if(isFunction(done)) {
 			var doneId = nextId();
-			callbacks[doneId] = done;
-			html += '<script type="text/javascript">' + 
+			callbacks[doneId] = function() {
+				queue.push(done);
+				delete callbacks[doneId];
+			};
+			// no need to proxy the call to done, so we can append this to the 
+			// filtered HTML
+			doneHtml = '<script type="text/javascript">' + 
 				TEMPLATE.replace(/%d/,doneId) + '</script>';
 		}
 		// for each tag, generate a function to load and eval the code and queue
 		// themselves
-		return html.replace(SCRIPT_TAGS,proxyTag);
+		return html.replace(SCRIPT_TAGS,proxyTag) + doneHtml;
 		function proxyTag(element,openTag,code) {
 			var src = (SRC_ATTR.exec(openTag)||[])[1],
 				type = (TYPE_ATTR.exec(openTag)||[])[1] || '',
@@ -365,8 +371,8 @@
 			function captureHtml(script) {
 				html(captureWrite(script));
 			}
-			function html(markup,done) {
-				$.replaceWith('#'+divId,sanitize(markup,done,queue));
+			function html(markup) {
+				$.replaceWith('#'+divId,sanitize(markup,null,queue));
 			}
 			return openTag + TEMPLATE.replace(/%d/,id) + 
 				'</script><div style="display: none" id="'+divId+'"></div>';
