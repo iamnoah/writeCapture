@@ -1,5 +1,5 @@
 /**
- * writeCapture.js v0.3.2-SNAPSHOT
+ * writeCapture.js v0.3.3-SNAPSHOT
  *
  * @author noah <noah.sloan@gmail.com>
  * 
