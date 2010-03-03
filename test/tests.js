@@ -139,7 +139,7 @@
 	
 	module("sanitize");
 	// safari 3.2.1 loads and executes xdomain scripts synchronously
-	var safari321 = $.browser.safari && $.browser.version === "525.27.1";
+	var safari321 = false & $.browser.safari && $.browser.version === "525.27.1";
 	function testSanitize(html,expected,sync,options,safariBug,testHtml) {
 		expect(3);
 		if(!sync) $.ajaxSettings.cache = true;
@@ -186,7 +186,7 @@
 	});
 
 	test("xdomain", function() {
-		testSanitize('Foo<script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script>Baz',
+		testSanitize('Foo<script type="text/javascript" src="http://noahsloan.com/bar.js"> </script>Baz',
 			"Fooexternal barBaz");
 	});
 	
@@ -198,13 +198,13 @@
 
 	test("all", function() {
 		testSanitize(
-			'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script>',
+			'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://noahsloan.com/bar.js"> </script><script type="text/javascript">document.write("Baz");</script>',
 			"Fooexternal barBaz",false,null,safari321);
 	});
 	
 	test("all asyncAll", function() {
 		testSanitize(
-				'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script>',
+				'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://noahsloan.com/bar.js"> </script><script type="text/javascript">document.write("Baz");</script>',
 		"Fooexternal barBaz",false,{asyncAll: true});
 	});
 	
@@ -306,7 +306,7 @@
 		}
 		dwa.sanitizeSerial([{
 			action: fn('#foo'),
-			html: '<span class="foo"><script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script></span>'
+			html: '<span class="foo"><script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://noahsloan.com/bar.js"> </script><script type="text/javascript">document.write("Baz");</script></span>'
 		}]);
 		dwa.sanitizeSerial([{
 			action: fn('#bar'),
