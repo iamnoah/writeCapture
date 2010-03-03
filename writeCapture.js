@@ -1,5 +1,5 @@
 /**
- * writeCapture.js v0.3.1-SNAPSHOT
+ * writeCapture.js v0.3.3-SNAPSHOT
  *
  * @author noah <noah.sloan@gmail.com>
  * 
@@ -38,7 +38,17 @@
 			 * and executed if present.
 			 */
 			replaceWith: function(selector,content) {
-				jQuery(jQuery(selector)[0]).replaceWith(content);
+			    // jQuery 1.4? has a bug in replaceWith so we can't use it directly
+			    var el = jQuery(selector)[0];
+				var next = el.nextSibling, parent = el.parentNode;
+
+				jQuery(el).remove();
+
+				if ( next ) {
+					jQuery(next).before( content );
+				} else {
+					jQuery(parent).append( content );
+				}
 			}
 		};
 	})(global.jQuery);
@@ -177,8 +187,10 @@
 		return parts && ( parts[1] && parts[1] != location.protocol || parts[2] != location.host );
 	}
 	
-	var SCRIPT_TAGS = /(<script(?:.|[\n\r])*?>)((?:.|[\n\r])*?)<\/script>/g, 
-		SRC_ATTR = /src="(.*?)"/,
+	var SCRIPT_TAGS = /(<script[\s\S]*?>)([\s\S]*?)<\/script>/ig, 
+		SRC_ATTR = /src="(.*?)"/i,
+		TYPE_ATTR = /type="(.*?)"/i,
+		LANG_ATTR = /language="(.*?)"/i,
 		GLOBAL = "__document_write_ajax_callbacks__",
 		DIV_PREFIX = "__document_write_ajax_div-",
 		TEMPLATE = "window['"+GLOBAL+"']['%d']();",
@@ -231,21 +243,42 @@
 		var queue = parentQ && new Q(parentQ) || GLOBAL_Q;
 		options = normalizeOptions(options);
 		var done = options.done;
+		var doneHtml = '';
 		
 		// if a done callback is passed, append a script to call it
 		if(isFunction(done)) {
 			var doneId = nextId();
-			callbacks[doneId] = done;
-			html += '<script type="text/javascript">' + 
+			callbacks[doneId] = function() {
+				queue.push(done);
+				delete callbacks[doneId];
+			};
+			// no need to proxy the call to done, so we can append this to the 
+			// filtered HTML
+			doneHtml = '<script type="text/javascript">' + 
 				TEMPLATE.replace(/%d/,doneId) + '</script>';
 		}
 		// for each tag, generate a function to load and eval the code and queue
 		// themselves
-		return html.replace(SCRIPT_TAGS,proxyTag);
+		return html.replace(SCRIPT_TAGS,proxyTag) + doneHtml;
 		function proxyTag(element,openTag,code) {
-			var src = (SRC_ATTR.exec(openTag)||[])[1];
+			var src = (SRC_ATTR.exec(openTag)||[])[1],
+				type = (TYPE_ATTR.exec(openTag)||[])[1] || '',
+				lang = (LANG_ATTR.exec(openTag)||[])[1] || '',
+				// TODO what about jscript? others?
+				isJs = type.toLowerCase().indexOf('javascript') !== -1 || 
+					lang.toLowerCase().indexOf('javascript') !== -1;
 			var id = nextId(), divId = DIV_PREFIX + id;
 			var run;
+			
+			if(!isJs) {
+			    return element;
+			}
+			
+			// fix for the inline script that writes a script tag with encoded 
+			// ampersands hack (more comon than you'd think)
+			if(src && isFunction(self.fixUrls)) {
+			    src = self.fixUrls(src);
+			}
 			
 			callbacks[id] = queueScript;
 			function queueScript() {
@@ -265,7 +298,7 @@
 						run = loadAsync();
 					} else {
 						run = loadSync; 
-					}					
+					}
 				}
 			} else {
 				// just eval code and be done
@@ -281,7 +314,7 @@
 					type: 'GET',
 					async: false,
 					success: captureHtml	
-				});						
+				});
 			}
 			function logAjaxError(xhr,status,error) {
 				logError("<XHR for "+src+">",error);
@@ -289,7 +322,7 @@
 			}
 			function loadAsync() {
 				var ready, scriptText;
-				function captureAndResume(script,status) {					
+				function captureAndResume(script,status) {
 					if(!ready) {
 						// loaded before queue run, cache text
 						scriptText = script;
@@ -338,8 +371,8 @@
 			function captureHtml(script) {
 				html(captureWrite(script));
 			}
-			function html(markup,done) {
-				$.replaceWith('#'+divId,sanitize(markup,done,queue));
+			function html(markup) {
+				$.replaceWith('#'+divId,sanitize(markup,null,queue));
 			}
 			return openTag + TEMPLATE.replace(/%d/,id) + 
 				'</script><div style="display: none" id="'+divId+'"></div>';
@@ -379,6 +412,11 @@
 	var name = 'writeCapture';
 	var self = global[name] = {
 		_original: global[name],
+		/**
+		 */
+		fixUrls: function(src) {
+		    return src.replace(/&amp;/g,'&');
+		},
 		noConflict: function() {
 			global[name] = this._original;
 			return this;
@@ -393,7 +431,7 @@
 			captureWrite: captureWrite
 		},
 		replaceWith: function(selector,content,options) {
-			$.replaceWith(selector,sanitize(content,options));				
+			$.replaceWith(selector,sanitize(content,options));
 		},
 		html: function(selector,content,options) {
 			var el = $.$(selector);

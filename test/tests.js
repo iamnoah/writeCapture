@@ -133,10 +133,14 @@
 		}
 	});
 	
+	function h(html) {
+	    return html.replace(/</g,'&lt;').toLowerCase();
+	}
+	
 	module("sanitize");
 	// safari 3.2.1 loads and executes xdomain scripts synchronously
-	var safari321 = $.browser.safari && $.browser.version === "525.27.1";
-	function testSanitize(html,expected,sync,options,safariBug) {
+	var safari321 = false & $.browser.safari && $.browser.version === "525.27.1";
+	function testSanitize(html,expected,sync,options,safariBug,testHtml) {
 		expect(3);
 		if(!sync) $.ajaxSettings.cache = true;
 		var done = false;
@@ -146,7 +150,7 @@
 		function finish(){ 
 			done = true; 
 			ok(done,"done called"); 
-			equals($('#foo').text(),expected);
+			equals(h($('#foo')[testHtml ? 'html' : 'text']()),h(expected));
 			if(!sync) start(); 
 		}
 		equals(done,!!sync || !!safariBug,"scripts sync");			
@@ -160,8 +164,14 @@
 	test("writeln",function() {
 		testSanitize(
 			'Foo<script type="text/javascript">document.writeln("Bar");</script>Baz',
-			"FooBar\nBaz",true);
-	});	
+			$("<div>FooBar\nBaz</div>").text(),true);
+	});
+
+	test("xhtml",function() {
+		testSanitize(
+			'Foo<script type="text/javascript">document.write(\'<span>Bar<input name="Bar"></span>\');</script>Baz',
+			$('<div/>').append('Foo<span>Bar<input name="Bar"/></span>Baz').html(),true,null,false,true);
+	});
 	
 
 	test("external", function() {
@@ -176,19 +186,25 @@
 	});
 
 	test("xdomain", function() {
-		testSanitize('Foo<script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script>Baz',
+		testSanitize('Foo<script type="text/javascript" src="http://noahsloan.com/bar.js"> </script>Baz',
+			"Fooexternal barBaz");
+	});
+	
+	
+	test("xdomain - encoded ampersand", function() {
+		testSanitize('Foo<script type="text/javascript"><!--\ndocument.write(\'<scri\'+\'pt type="text/javascript" src="http://noahsloan.com/writeCapture?blah&amp;foo=bar"> </s\'+\'cript>\');</script>Baz',
 			"Fooexternal barBaz");
 	});
 
 	test("all", function() {
 		testSanitize(
-			'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script>',
+			'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://noahsloan.com/bar.js"> </script><script type="text/javascript">document.write("Baz");</script>',
 			"Fooexternal barBaz",false,null,safari321);
 	});
 	
 	test("all asyncAll", function() {
 		testSanitize(
-				'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script>',
+				'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://noahsloan.com/bar.js"> </script><script type="text/javascript">document.write("Baz");</script>',
 		"Fooexternal barBaz",false,{asyncAll: true});
 	});
 	
@@ -290,7 +306,7 @@
 		}
 		dwa.sanitizeSerial([{
 			action: fn('#foo'),
-			html: '<span class="foo"><script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://pastebin.com/pastebin.php?dl=f70a35f26"> </script><script type="text/javascript">document.write("Baz");</script></span>'
+			html: '<span class="foo"><script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://noahsloan.com/bar.js"> </script><script type="text/javascript">document.write("Baz");</script></span>'
 		}]);
 		dwa.sanitizeSerial([{
 			action: fn('#bar'),
