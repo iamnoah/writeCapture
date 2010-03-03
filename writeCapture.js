@@ -187,7 +187,7 @@
 		return parts && ( parts[1] && parts[1] != location.protocol || parts[2] != location.host );
 	}
 	
-	var SCRIPT_TAGS = /(<script(?:.|[\n\r])*?>)((?:.|[\n\r])*?)<\/script>/ig, 
+	var SCRIPT_TAGS = /(<script[\s\S]*?>)([\s\S]*?)<\/script>/ig, 
 		SRC_ATTR = /src="(.*?)"/i,
 		TYPE_ATTR = /type="(.*?)"/i,
 		LANG_ATTR = /language="(.*?)"/i,
