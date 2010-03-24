@@ -264,9 +264,9 @@
 			var src = (SRC_ATTR.exec(openTag)||[])[1],
 				type = (TYPE_ATTR.exec(openTag)||[])[1] || '',
 				lang = (LANG_ATTR.exec(openTag)||[])[1] || '',
-				// TODO what about jscript? others?
 				isJs = type.toLowerCase().indexOf('javascript') !== -1 || 
-					lang.toLowerCase().indexOf('javascript') !== -1;
+					lang.toLowerCase().indexOf('javascript') !== -1 ||
+					(!type && !lang); // no type or lang is assumed to be JS?
 			var id = nextId(), divId = DIV_PREFIX + id;
 			var run;
 			
