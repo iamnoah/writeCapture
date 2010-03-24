@@ -36,7 +36,7 @@
 
 	module("issues");
 	test("4",function() {
-		document.write = console.log;
+		document.write = function(it) { console.log('MISS',it); };
 		$('#qux').writeCapture('html','<script type="text/javascript" src="bs-serving.js"> </script>');
 	});
 	
