@@ -187,10 +187,23 @@
 		return parts && ( parts[1] && parts[1] != location.protocol || parts[2] != location.host );
 	}
 	
+	function attrPattern(name) {
+		return new RegExp(name+'=(?:(["\'])(.*?)\\1|(\\S+))','i');
+	}
+	
+	function matchAttr(name) {
+		var regex = attrPattern(name);
+		return function(tag) {
+			var match = regex.exec(tag) || [];
+			return match[2] || match[3];
+		};
+	}
+	
 	var SCRIPT_TAGS = /(<script[\s\S]*?>)([\s\S]*?)<\/script>/ig, 
-		SRC_ATTR = /src="(.*?)"/i,
-		TYPE_ATTR = /type="(.*?)"/i,
-		LANG_ATTR = /language="(.*?)"/i,
+		SRC_REGEX = attrPattern('src'),
+		SRC_ATTR = matchAttr('src'),
+		TYPE_ATTR = matchAttr('type'),
+		LANG_ATTR = matchAttr('language'),
 		GLOBAL = "__document_write_ajax_callbacks__",
 		DIV_PREFIX = "__document_write_ajax_div-",
 		TEMPLATE = "window['"+GLOBAL+"']['%d']();",
@@ -261,12 +274,13 @@
 		// themselves
 		return html.replace(SCRIPT_TAGS,proxyTag) + doneHtml;
 		function proxyTag(element,openTag,code) {
-			var src = (SRC_ATTR.exec(openTag)||[])[1],
-				type = (TYPE_ATTR.exec(openTag)||[])[1] || '',
-				lang = (LANG_ATTR.exec(openTag)||[])[1] || '',
-				// TODO what about jscript? others?
+			var src = SRC_ATTR(openTag),
+				type = TYPE_ATTR(openTag) || '',
+				lang = LANG_ATTR(openTag) || '',
 				isJs = type.toLowerCase().indexOf('javascript') !== -1 || 
-					lang.toLowerCase().indexOf('javascript') !== -1;
+					lang.toLowerCase().indexOf('javascript') !== -1 ||
+					(!type && !lang); // no type or lang is assumed to be JS?
+			
 			var id = nextId(), divId = DIV_PREFIX + id;
 			var run;
 			
@@ -287,7 +301,7 @@
 			}
 			
 			if(src) {
-				openTag = openTag.replace(SRC_ATTR,'');
+				openTag = openTag.replace(SRC_REGEX,'');
 				if(isXDomain(src)) {
 					// will load async via script tag injection (eval()'d on
 					// it's own)
@@ -425,6 +439,7 @@
 		_forTest: {
 			Q: Q,
 			$: $,
+			matchAttr: matchAttr,
 			slice: slice,
 			capture: capture,
 			uncapture: uncapture,

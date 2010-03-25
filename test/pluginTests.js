@@ -33,6 +33,12 @@
 			html('Foo<script type="text/javascript">document.write("BaZ");</script>').
 			end().endCapture().html(),'<div class="quxx">FooBaZ</div>Qux');
 	});	
+
+	module("issues");
+	test("4",function() {
+		document.write = function(it) { console.log('MISS',it); };
+		$('#qux').writeCapture('html','<script type="text/javascript" src="bs-serving.js"> </script>');
+	});
 	
 	module("load");
 	test("inline",function() {
