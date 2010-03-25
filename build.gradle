@@ -1,0 +1,84 @@
+defaultTasks 'minify'
+
+def VERSION_LINE = / \* writeCapture\.js v((\d+)\.(\d+)\.(\d+)(-SNAPSHOT)?)/
+
+task upVersion << {
+	def script = new File('writeCapture.js')
+	def text = script.text.replaceAll(VERSION_LINE) { line, v, major, minor, fix, snapshot ->
+		if(!snapshot) {
+			// if snapshot wasn't in there, increment the version number
+			fix = fix.toInteger() + 1
+		}
+ 		" * writeCapture.js v${major}.${minor}.${fix}"
+	}
+	script.write(text)
+}
+
+def getVersion = {
+	(new File('writeCapture.js').filterLine { 
+		it =~ VERSION_LINE 
+	} =~ VERSION_LINE)[0][1]
+}
+
+def doMinify = {
+	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
+		arg(value:'-o')
+		arg(value:"writeCapture-${getVersion()}-min.js")
+		arg(value:'writeCapture.js')		
+	}
+}
+
+def doConcat = {
+	ant.concat(destfile:'build-concat.tmp.js') {
+		fileset(dir:'support',includes:'nolib-support.js')
+		fileset(dir:'.',includes:'writeCapture.js')
+	}
+}
+
+def doConcatPlugin = {
+	ant.concat(destfile:'plugin-concat.tmp.js') {		
+		fileset(dir:'.',includes:'writeCapture.js')
+		fileset(dir:'plugin',includes:'jquery.writeCapture.js')		
+	}
+}
+
+task concat << doConcat
+task concatPlugin << doConcatPlugin
+
+def doMinifyNolib = {
+	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
+		arg(value:'-o')
+		arg(value:"writeCapture-${getVersion()}-nolib-min.js")
+		arg(value:'build-concat.tmp.js')		
+	}
+	ant.delete(file:'build-concat.tmp.js')
+}
+
+def doMinifyPlugin = {
+	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
+		arg(value:'-o')
+		arg(value:"jquery.writeCapture-${getVersion()}-min.js")
+		arg(value:'plugin-concat.tmp.js')		
+	}
+	ant.delete(file:'plugin-concat.tmp.js')
+}
+
+task minifyNolib(dependsOn:'concat') << doMinifyNolib
+
+task minifyPlugin(dependsOn:'concatPlugin') << doMinifyPlugin
+
+task minify << doMinify
+
+task release(dependsOn:['upVersion']) << {
+	// putting minify in dependsOn causes it to run before upVersion... WTF?
+	doMinify() 
+	doConcat()
+	doMinifyNolib()
+	doConcatPlugin()
+	doMinifyPlugin()	
+	def version = getVersion()
+	println "Releasing v${version}"
+	println "You should:"	
+	println "	git commit -am 'releasing version ${version}'"
+	println "	git tag -a v${version} -m 'tagging release v${version}'"
+}
