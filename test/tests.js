@@ -140,7 +140,7 @@
 	module("parse");
 	test("matchAttr",function() {
 		var src = fn.matchAttr('src');
-		equals(src('<script src=http://foo.com/bar?baz=qux >'),'http://foo.com/bar?baz=qux');
+		equals(src('<script src=http://foo.com/bar?baz=qux>'),'http://foo.com/bar?baz=qux');
 		equals(src('<script src=baz qux>'),'baz');
 		equals(fn.matchAttr('type')('<script type="text/javascript">'),'text/javascript');
 	});
