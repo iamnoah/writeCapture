@@ -251,6 +251,12 @@ and is expected to return the real path.
 
 # Version History #
 
+## 0.3.3 ##
+
+ * Fixed a number of issues with 'marginal' scripts (but if all scripts were in
+   good shape, you wouldn't need writeCapture). Should help with some ad servers.
+   Hat tip to [neskire](http://github.com/neskire) for raising the issues.
+
 ## 0.3.2 ##
 
  * Bugfix - jQuery 1.4.1 has a bug in replaceWith that mishandles strings. We 
