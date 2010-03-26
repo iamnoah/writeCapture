@@ -279,9 +279,9 @@
 			var src = SRC_ATTR(openTag),
 				type = TYPE_ATTR(openTag) || '',
 				lang = LANG_ATTR(openTag) || '',
-				isJs = type.toLowerCase().indexOf('javascript') !== -1 || 
-					lang.toLowerCase().indexOf('javascript') !== -1 ||
-					(!type && !lang); // no type or lang is assumed to be JS?
+				isJs = (!type && !lang) || // no type or lang assumes JS
+					type.toLowerCase().indexOf('javascript') !== -1 || 
+					lang.toLowerCase().indexOf('javascript') !== -1;
 			
 			var id = nextId(), divId = DIV_PREFIX + id;
 			var run;
