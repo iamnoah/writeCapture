@@ -15,8 +15,7 @@ document.write calls.
 Fortunately for you, difficult is not impossible, and writeCapture.js has 
 already written (and extensively tested) the difficult part for you. All 
 you have to do is give it the offending evil HTML and it will return nice
-clean HTML, safe for injection into the document. And it does it all in less
-than 1.6k when Packed and Gzipped.
+clean HTML, safe for injection into the document.
 
 # Usage #
 
