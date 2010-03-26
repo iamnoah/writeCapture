@@ -2,3 +2,5 @@
 build.gradle
 README.md
 plugin/README.md
+writeCapture-*-min.js
+jquery.writeCapture-*-min.js
