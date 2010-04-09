@@ -133,6 +133,49 @@
 		}
 	};
 	
+	// TODO unit tests...
+	function MockDocument() { }
+	MockDocument.prototype = {
+		_html: '',
+		open: function( ) { 
+			this._opened = true;
+			if(this._delegate) {
+				this._delegate.open();
+			}
+		},
+		write: function(s) { 
+			if(this._closed) return; 
+			this._written = true;
+			if(this._delegate) {
+				this._delegate.write(s);
+			} else {
+				this._html += s;
+			}
+		}, 
+		writeln: function(s) { 
+			this.write(s + '\n');
+		}, 
+		close: function( ) { 
+			this._closed = true;
+			if(this._delegate) {
+				this._delegate.close();
+			}
+		}, 
+		copyTo: function(d) { 
+			this._delegate = d;
+			d.foobar = true;
+			if(this._opened) {
+				d.open();
+			}
+			if(this._written) {
+				d.write(this._html); 
+			}
+			if(this._closed) {
+				d.close();
+			}
+		}
+	};
+	
 	function capture() {
 		var state = {
 			write: global.document.write,
@@ -141,10 +184,18 @@
 			tempEls: [],
 			finish: function() {
 				each(this.tempEls,function(it) {
-					var real = document.getElementById(it.id);
+					var real = global.document.getElementById(it.id);
+					if(!real) throw "No element with id: " + it.id;
 					each(it.el.childNodes,function(it) {
 						real.appendChild(it);
 					});
+					if(real.contentWindow) {
+						// TODO why is the setTimeout necessary?
+						global.setTimeout(function() {
+							it.el.contentWindow.document.
+								copyTo(real.contentWindow.document);
+						},1);
+					}
 				});
 			},
 			out: ''
@@ -163,6 +214,8 @@
 		function makeTemp(id) {
 			var t = global.document.createElement('div');
 			state.tempEls.push({id:id,el:t});
+			// mock contentWindow in case it's supposed to be an iframe
+			t.contentWindow = { document: new MockDocument() };
 			return t;
 		}
 		function getEl(id) {
