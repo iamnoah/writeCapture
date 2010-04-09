@@ -219,6 +219,23 @@ unsupported selector is given.
 
 # Hacks #
 
+## proxyGetElementById - DOM manipulation mixed with `document.write`##
+
+Amazingly enough, some scripts will mix DOM manipulation methods like 
+`element.appendChild` and `document.write`. In situations like these, there
+isn't a lot writeCapture can do, however there is a hack that may help some of
+your scripts:
+
+     writeCapture.proxyGetElementById = true;
+     // or for the jQuery plugin:
+     jQuery.writeCapture.proxyGetElementById = true;
+
+Enabling the hack will proxy `document.getElementById` and return a temporary 
+element if no element with that id exists. Once the script's HTML has been 
+written, the contents of the temporary element are appended to the real 
+element. Obviously it would be easy to construct a script that still failed 
+with this hack enabled however, it will help in some cases.
+
 ## fixUrls - URLs with encoded ampersands ##
 
 A common hack used for browser compatibility goes something like this:
