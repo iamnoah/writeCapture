@@ -137,21 +137,46 @@
 		var state = {
 			write: global.document.write,
 			writeln: global.document.writeln,
+			getEl: global.document.getElementById,
+			tempEls: [],
+			finish: function() {
+				each(this.tempEls,function(it) {
+					var real = document.getElementById(it.id);
+					each(it.el.childNodes,function(it) {
+						real.appendChild(it);
+					});
+				});
+			},
 			out: ''
 		};
 		global.document.write = replacementWrite;
-		global.document.writeln = replacementWriteln;	
+		global.document.writeln = replacementWriteln;
+		if(self.proxyGetElementById) {
+			global.document.getElementById = getEl;			
+		}
 		function replacementWrite(s) {
 			state.out +=  s;
 		}
 		function replacementWriteln(s) {
 			state.out +=  s + '\n';
-		}		
+		}
+		function makeTemp(id) {
+			var t = global.document.createElement('div');
+			state.tempEls.push({id:id,el:t});
+			return t;
+		}
+		function getEl(id) {
+			var result = state.getEl.call(global.document,id);
+			return result || makeTemp(id);
+		}
 		return state;
 	}
 	function uncapture(state) {
 		global.document.write = state.write;
 		global.document.writeln = state.writeln;
+		if(self.proxyGetElementById) {
+			global.document.getElementById = state.getEl;
+		}
 		return state.out;
 	}
 	
@@ -178,7 +203,7 @@
 		} finally {
 			uncapture(state);
 		}
-		return state.out;
+		return state;
 	}
 	
 	// copied from jQuery
@@ -380,11 +405,14 @@
 				});
 				function captureAndResume(xhr,st,error) {
 					html(uncapture(state));
+					state.finish();
 					queue.resume();
 				}
 			}
 			function captureHtml(script) {
-				html(captureWrite(script));
+				var state = captureWrite(script);
+				html(state.out);
+				state.finish();
 			}
 			function html(markup) {
 				$.replaceWith('#'+divId,sanitize(markup,null,queue));
@@ -436,6 +464,11 @@
 			global[name] = this._original;
 			return this;
 		},
+		/**
+		 * Enables a fun little hack that replaces document.getElementById and
+		 * creates temporary elements for the calling code to use.
+		 */
+		proxyGetElementById: false,
 		// this is only for testing, please don't use these
 		_forTest: {
 			Q: Q,
