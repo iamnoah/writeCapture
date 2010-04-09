@@ -299,7 +299,6 @@
 		// themselves
 		return html.replace(SCRIPT_TAGS,proxyTag) + doneHtml;
 		function proxyTag(element,openTag,code) {
-			console.log(openTag);
 			var src = SRC_ATTR(openTag),
 				type = TYPE_ATTR(openTag) || '',
 				lang = LANG_ATTR(openTag) || '',
