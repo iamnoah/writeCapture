@@ -3,6 +3,8 @@
 		ok(false,"'real' document.write(ln) called!");
 	};
 	var fn = dwa._forTest;
+	// enable for all tests to catch side effects
+	dwa.proxyGetElementById = true;
 	
 	module("support");
 	test("slice",function() {
@@ -12,7 +14,7 @@
 		same((function() { return fn.slice(arguments,1); })(1,2,3,4,5),[2,3,4,5]);
 	});
 	test("captureWrite",function() {
-		equals(fn.captureWrite("document.write('FooBarBaz')"),'FooBarBaz');
+		equals(fn.captureWrite("document.write('FooBarBaz')").out,'FooBarBaz');
 	});
 	
 	module("support.Q");
@@ -167,6 +169,19 @@
 		testSanitize(
 			'Foo<script type="text/javascript">document.write("Bar");</script>Baz',
 			"FooBarBaz",true);
+	});
+	
+	test("document.getElementById",function() { // issue #5
+		testSanitize(
+			'Foo<script type="text/javascript" src="getById.js"> </script>Baz',
+			'FooHello WorldBaz',true);
+	});
+	
+	
+	test("xdomain getElementById",function() { // issue #5
+		testSanitize(
+			'Foo<script type="text/javascript" src="http://noahsloan.com/getById.js"> </script>Baz',
+			'FooHello WorldBaz',false);
 	});
 	
 	test("writeln",function() {

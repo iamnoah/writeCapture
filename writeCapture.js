@@ -1,5 +1,5 @@
 /**
- * writeCapture.js v0.3.4-SNAPSHOT
+ * writeCapture.js v0.9.0
  *
  * @author noah <noah.sloan@gmail.com>
  * 
@@ -133,25 +133,103 @@
 		}
 	};
 	
+	// TODO unit tests...
+	function MockDocument() { }
+	MockDocument.prototype = {
+		_html: '',
+		open: function( ) { 
+			this._opened = true;
+			if(this._delegate) {
+				this._delegate.open();
+			}
+		},
+		write: function(s) { 
+			if(this._closed) return; 
+			this._written = true;
+			if(this._delegate) {
+				this._delegate.write(s);
+			} else {
+				this._html += s;
+			}
+		}, 
+		writeln: function(s) { 
+			this.write(s + '\n');
+		}, 
+		close: function( ) { 
+			this._closed = true;
+			if(this._delegate) {
+				this._delegate.close();
+			}
+		}, 
+		copyTo: function(d) { 
+			this._delegate = d;
+			d.foobar = true;
+			if(this._opened) {
+				d.open();
+			}
+			if(this._written) {
+				d.write(this._html); 
+			}
+			if(this._closed) {
+				d.close();
+			}
+		}
+	};
+	
 	function capture() {
 		var state = {
 			write: global.document.write,
 			writeln: global.document.writeln,
+			getEl: global.document.getElementById,
+			tempEls: [],
+			finish: function() {
+				each(this.tempEls,function(it) {
+					var real = global.document.getElementById(it.id);
+					if(!real) throw "No element with id: " + it.id;
+					each(it.el.childNodes,function(it) {
+						real.appendChild(it);
+					});
+					if(real.contentWindow) {
+						// TODO why is the setTimeout necessary?
+						global.setTimeout(function() {
+							it.el.contentWindow.document.
+								copyTo(real.contentWindow.document);
+						},1);
+					}
+				});
+			},
 			out: ''
 		};
 		global.document.write = replacementWrite;
-		global.document.writeln = replacementWriteln;	
+		global.document.writeln = replacementWriteln;
+		if(self.proxyGetElementById) {
+			global.document.getElementById = getEl;			
+		}
 		function replacementWrite(s) {
 			state.out +=  s;
 		}
 		function replacementWriteln(s) {
 			state.out +=  s + '\n';
-		}		
+		}
+		function makeTemp(id) {
+			var t = global.document.createElement('div');
+			state.tempEls.push({id:id,el:t});
+			// mock contentWindow in case it's supposed to be an iframe
+			t.contentWindow = { document: new MockDocument() };
+			return t;
+		}
+		function getEl(id) {
+			var result = state.getEl.call(global.document,id);
+			return result || makeTemp(id);
+		}
 		return state;
 	}
 	function uncapture(state) {
 		global.document.write = state.write;
 		global.document.writeln = state.writeln;
+		if(self.proxyGetElementById) {
+			global.document.getElementById = state.getEl;
+		}
 		return state.out;
 	}
 	
@@ -178,7 +256,7 @@
 		} finally {
 			uncapture(state);
 		}
-		return state.out;
+		return state;
 	}
 	
 	// copied from jQuery
@@ -274,7 +352,6 @@
 		// themselves
 		return html.replace(SCRIPT_TAGS,proxyTag) + doneHtml;
 		function proxyTag(element,openTag,code) {
-			console.log(openTag);
 			var src = SRC_ATTR(openTag),
 				type = TYPE_ATTR(openTag) || '',
 				lang = LANG_ATTR(openTag) || '',
@@ -380,11 +457,14 @@
 				});
 				function captureAndResume(xhr,st,error) {
 					html(uncapture(state));
+					state.finish();
 					queue.resume();
 				}
 			}
 			function captureHtml(script) {
-				html(captureWrite(script));
+				var state = captureWrite(script);
+				html(state.out);
+				state.finish();
 			}
 			function html(markup) {
 				$.replaceWith('#'+divId,sanitize(markup,null,queue));
@@ -436,6 +516,11 @@
 			global[name] = this._original;
 			return this;
 		},
+		/**
+		 * Enables a fun little hack that replaces document.getElementById and
+		 * creates temporary elements for the calling code to use.
+		 */
+		proxyGetElementById: false,
 		// this is only for testing, please don't use these
 		_forTest: {
 			Q: Q,
