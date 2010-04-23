@@ -1,16 +1,16 @@
 # Why? #
 
 Sometimes we are forced to use a third party script or markup that we simply 
-cannot change. While our websites are sleek and snappy with a nearly pristine
-codebase and progressive enhancement and Ajax everywhere, many 3rd party 
-libraries are still using tables for layout and the dreaded, *evil* 
-document.write method.
+cannot change (usually an Ad server). While our websites are sleek and snappy 
+with a nearly pristine codebase and progressive enhancement and Ajax 
+everywhere, many 3rd party libraries are still using tables for layout and 
+the dreaded, *evil* `document.write` method.
 
-What makes document.write so evil is that it is only useful for scripts inside
+What makes `document.write` so evil is that it is only useful for scripts inside
 the body tag that are processed while the page is loading. If document.write is
 called anytime after page load, it wipes out all the existing page content. 
 That makes it very difficult to dynamically refresh content containing 
-document.write calls.
+`document.write` calls.
 
 Fortunately for you, difficult is not impossible, and writeCapture.js has 
 already written (and extensively tested) the difficult part for you. All 
@@ -236,6 +236,20 @@ written, the contents of the temporary element are appended to the real
 element. Obviously it would be easy to construct a script that still failed 
 with this hack enabled however, it will help in some cases.
 
+### Mock iframes ###
+
+Some scripts even go so far as to create iframes using DOM manipulation and 
+then write to the using `document.write`. Ironically, these writes are 
+perfectly safe because the new iframe is a clean slate. The problem arises when
+an iframe is written using `document.write` then retrieved by id using 
+`getElementById`. With `proxyGetElementById` enabled, the call will return an 
+element, however it returns a plain div, not an iframe. This is a problem 
+because an iframe has a special property called `contentWindow` with its own
+document. So in addition to creating a proxy div element for missing elements,
+we also have to mock the `contentWindow` property and provide a document for 
+the script to write to. Again, there are surely cases where this approach will
+fail, but it will help in many.
+
 ## fixUrls - URLs with encoded ampersands ##
 
 A common hack used for browser compatibility goes something like this:
@@ -266,6 +280,17 @@ and is expected to return the real path.
   enough to use document.write, it's a possibility.
 
 # Version History #
+
+## 0.9.0 ##
+
+ * writeCapture.js has matured enough to be close to a 1.0 release, after a
+   little seasoning. If you have a problem with your Ad server or other code,
+   submit a bug report!
+
+ * Added hacks to support scripts that combine `document.write` with DOM 
+   manipulation and iframes. Thanks to [jcugno](http://github.com/jcugno)
+   for the bug reports and example code. Enabling `proxyGetElementById` 
+   should help with some Ad servers.
 
 ## 0.3.3 ##
 
