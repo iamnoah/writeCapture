@@ -315,6 +315,12 @@
 	// very least, A will get nothing and B will get the wrong content.
 	var GLOBAL_Q = new Q();
 	
+	var debug = [];
+	var logDebug = window._debugWriteCapture ? function() {} : 
+		function (type,src,data) {
+			debug.push({type:type,src:src,data:data});
+		};
+	
 	/**
 	 * Sanitize the given HTML so that the scripts will execute with a modified
 	 * document.write that will capture the output and append it in the 
@@ -359,6 +365,7 @@
 					type.toLowerCase().indexOf('javascript') !== -1 || 
 					lang.toLowerCase().indexOf('javascript') !== -1;
 			
+			logDebug('replace',src,element);
 			var id = nextId(), divId = DIV_PREFIX + id;
 			var run;
 			
@@ -448,6 +455,7 @@
 			function loadXDomain(cb) {
 				var state = capture();
 				queue.pause(); // pause the queue while the script loads
+				logDebug('pause',src);
 				$.ajax({
 					url: src,
 					type: 'GET',
@@ -456,8 +464,10 @@
 					error: logAjaxError
 				});
 				function captureAndResume(xhr,st,error) {
+					logDebug('out', src, state.out);
 					html(uncapture(state));
 					state.finish();
+					logDebug('resume',src);
 					queue.resume();
 				}
 			}
@@ -516,6 +526,7 @@
 			global[name] = this._original;
 			return this;
 		},
+		debug: debug,
 		/**
 		 * Enables a fun little hack that replaces document.getElementById and
 		 * creates temporary elements for the calling code to use.
