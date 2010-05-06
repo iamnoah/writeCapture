@@ -56,7 +56,7 @@
 	// utilities
 	function each(array,fn) {
 		for(var i =0, len = array.length; i < len; i++) { 
-			fn(array[i]); 
+			if( fn(array[i]) === false) return; 
 		}
 	}	
 	function isFunction(o) {
@@ -76,61 +76,83 @@
 		}
 		return result;
 	}
-	function defer(ctx,name) {
-		setTimeout(function() { ctx[name](); },1);
-	}
 	
-	/**
-	 * Provides a task queue for ensuring that scripts are run in order.
-	 * 
-	 * 
-	 */
-	function Q(parent) {
+	function SubQ(parent) {
 		this._queue = [];
 		this._children = [];
 		this._parent = parent;
-		if(parent) parent._register(this);
+		if(parent) parent._addChild(this)		
 	}
 	
-	Q.prototype = {
-		_paused: false,
+	SubQ.prototype = {
+		_addChild: function(q) {
+			this._children.push(q);
+		},
 		push: function (task) {
 			this._queue.push(task);
-			this._next();
+			this._bubble('_doRun');
 		},
 		pause: function() {
-			this._paused = true;
+			this._bubble('_doPause');
 		},
 		resume: function() {
-			this._paused = false;
-			this._next(true);
+			this._bubble('_doResume');
 		},
-		_register: function(child) {
-			this._children.push(child);
-		},
-		_isPaused: function() {
-			return this._paused || any(this._children,isPaused);
-			function isPaused(c) {
-				return c._isPaused();
+		_bubble: function(name) {
+			var root = this;
+			while(!root[name]) {
+				root = root._parent;
 			}
+			return root[name]();
 		},
-		_next: function(resuming) {
-			var next;
-			if(!this._isPaused()) {
-				if ((next = this._queue.shift())) {
-					next();
-					this._next();
-				} else if(this._parent) {
-					// !paused and queue is empty, so let parent queue resume running
-					if(resuming) {
-						// TODO why is the defer necessary? is it safe(deterministic)? i.e., could we ever have two timeouts at the same time? [testing says no, needs a proof]
-						defer(this._parent,'_next');
-					} else {
-						this._parent._next();
-					}
-				}
+		_next: function() {
+			if(any(this._children,runNext)) return true;
+			function runNext(c) {
+				return c._next();
+			}
+			var task = this._queue.shift();
+			if(task) {
+				task();
+			}
+			return !!task;
+		}
+	};
+	
+	/**
+	 * Provides a task queue for ensuring that scripts are run in order.
+	 *
+	 * The only public methods are push, pause and resume.
+	 */
+	function Q(parent) {
+		if(parent) {
+			return new SubQ(parent);
+		}
+		SubQ.call(this);
+		this.paused = 0;
+	}
+	
+	Q.prototype = (function() {
+		function f() {}
+		f.prototype = SubQ.prototype;
+		return new f();
+	})();
+	
+	Q.prototype._doRun = function() {
+		if(!this.running) {
+			this.running = true;
+			try {
+				while(!this.paused && this._next());
+			} finally {
+				this.running = false;
 			}
 		}
+	};
+	Q.prototype._doPause= function() {
+		this.paused++;
+	};
+	Q.prototype._doResume = function() {
+		this.paused--;
+		this._doRun();
 	};
 	
 	// TODO unit tests...
@@ -286,6 +308,7 @@
 		DIV_PREFIX = "__document_write_ajax_div-",
 		TEMPLATE = "window['"+GLOBAL+"']['%d']();",
 		callbacks = global[GLOBAL] = {},
+		TEMPLATE_TAG = '<script type="text/javascript">' + TEMPLATE + '</script>',
 		global_id = 0;
 	function nextId() {
 		return (++global_id).toString();
@@ -351,8 +374,7 @@
 			};
 			// no need to proxy the call to done, so we can append this to the 
 			// filtered HTML
-			doneHtml = '<script type="text/javascript">' + 
-				TEMPLATE.replace(/%d/,doneId) + '</script>';
+			doneHtml = TEMPLATE_TAG.replace(/%d/,doneId);
 		}
 		// for each tag, generate a function to load and eval the code and queue
 		// themselves
@@ -412,15 +434,25 @@
 					url: src,
 					type: 'GET',
 					async: false,
-					success: captureHtml	
+					success: function(html) {
+						captureHtml(html);
+					}	
 				});
 			}
 			function logAjaxError(xhr,status,error) {
 				logError("<XHR for "+src+">",error);
 				queue.resume();
 			}
+			function setupResume() {
+				var id = nextId();
+				callbacks[id] = function() {
+					queue.resume();
+					delete callbacks[id];
+				};
+				return TEMPLATE_TAG.replace(/%d/,id);
+			}
 			function loadAsync() {
-				var ready, scriptText;
+				var ready, scriptText, resume = setupResume();
 				function captureAndResume(script,status) {
 					if(!ready) {
 						// loaded before queue run, cache text
@@ -428,11 +460,9 @@
 						return;
 					}
 					try {
-						captureHtml(script);
+						captureHtml(script, resume);
 					} catch(e) {
 						logError(script,e);
-					} finally {
-						queue.resume();
 					}
 				}
 				// start loading the text
@@ -446,7 +476,7 @@
 				return function() {
 					ready = true;
 					if(scriptText) {
-						captureHtml(scriptText);
+						captureHtml(scriptText, resume);
 					} else {
 						queue.pause();	
 					}
@@ -465,19 +495,18 @@
 				});
 				function captureAndResume(xhr,st,error) {
 					logDebug('out', src, state.out);
-					html(uncapture(state));
+					html(uncapture(state), setupResume());
 					state.finish();
 					logDebug('resume',src);
-					queue.resume();
 				}
 			}
-			function captureHtml(script) {
+			function captureHtml(script, cb) {
 				var state = captureWrite(script);
-				html(state.out);
+				html(state.out, cb);
 				state.finish();
 			}
-			function html(markup) {
-				$.replaceWith('#'+divId,sanitize(markup,null,queue));
+			function html(markup,cb) {
+				$.replaceWith('#'+divId,sanitize(markup,null,queue) + (cb || ''));
 			}
 			return openTag + TEMPLATE.replace(/%d/,id) + 
 				'</script><div style="display: none" id="'+divId+'"></div>';
@@ -535,6 +564,7 @@
 		// this is only for testing, please don't use these
 		_forTest: {
 			Q: Q,
+			GLOBAL_Q: GLOBAL_Q,
 			$: $,
 			matchAttr: matchAttr,
 			slice: slice,
