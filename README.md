@@ -6,7 +6,7 @@ with a nearly pristine codebase and progressive enhancement and Ajax
 everywhere, many 3rd party libraries are still using tables for layout and 
 the dreaded, *evil* `document.write` method.
 
-What makes `document.write` so evil is that it is only useful for scripts inside
+What makes `document.write` so evil is that it is only "useful" for scripts inside
 the body tag that are processed while the page is loading. If document.write is
 called anytime after page load, it wipes out all the existing page content. 
 That makes it very difficult to dynamically refresh content containing 
@@ -222,7 +222,7 @@ unsupported selector is given.
 ## proxyGetElementById - DOM manipulation mixed with `document.write`##
 
 Amazingly enough, some scripts will mix DOM manipulation methods like 
-`element.appendChild` and `document.write`. In situations like these, there
+`element.appendChild` with `document.write`. In situations like these, there
 isn't a lot writeCapture can do, however there is a hack that may help some of
 your scripts:
 
@@ -239,7 +239,7 @@ with this hack enabled however, it will help in some cases.
 ### Mock iframes ###
 
 Some scripts even go so far as to create iframes using DOM manipulation and 
-then write to the using `document.write`. Ironically, these writes are 
+then write to them using `document.write`. Ironically, these writes are 
 perfectly safe because the new iframe is a clean slate. The problem arises when
 an iframe is written using `document.write` then retrieved by id using 
 `getElementById`. With `proxyGetElementById` enabled, the call will return an 
@@ -277,9 +277,20 @@ and is expected to return the real path.
   
 * Scripts that assume that they are the last element in the document will 
   probably not function properly. This is rare, but if a script is uncouth 
-  enough to use document.write, it's a possibility.
+  enough to use document.write, it's a possibility.  
 
 # Version History #
+
+## 0.9.5 ##
+
+ * Big overhaul of the internal queuing system. It should be more robust and 
+   100% deterministic from this point forward. Known to help with deeply nested
+   cross domain scripts.
+
+ * Fixed issue where scripts that include newlines in their src attribute were
+   being truncated.
+   
+ * Added debugging support. See support/debug-support.js.
 
 ## 0.9.0 ##
 
