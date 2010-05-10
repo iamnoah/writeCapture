@@ -143,12 +143,14 @@
 	function h(html) {
 	    return html.replace(/</g,'&lt;').toLowerCase();
 	}
+
 	
 	module("parse");
 	test("matchAttr",function() {
 		var src = fn.matchAttr('src');
 		equals(src('<script src=http://foo.com/bar?baz=qux>'),'http://foo.com/bar?baz=qux');
 		equals(src('<script src=baz qux>'),'baz');
+		equals(src('<script language="JavaScript1.1" src="http://adfarm.mediaplex.com/ad/js/9609-84269-1178-\n4?mpt=20100510143412&mpvc=http://media.fastclick.net/w/click.here?cid=142556;mid=418766;sid=52463;m=1;c=0;forced_click=">\n</script>'),'http://adfarm.mediaplex.com/ad/js/9609-84269-1178-\n4?mpt=20100510143412&mpvc=http://media.fastclick.net/w/click.here?cid=142556;mid=418766;sid=52463;m=1;c=0;forced_click=');
 		equals(fn.matchAttr('type')('<script type="text/javascript">'),'text/javascript');
 	});
 	
