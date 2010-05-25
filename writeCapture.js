@@ -198,6 +198,17 @@
 		}
 	};
 	
+	// test for IE 6/7 issue (issue 6) that prevents us from using call
+	var canCall = (function() {
+		var f = { f: global.document.getElementById };
+		try {
+			f.f.call(global.document,'abc');
+			return true;
+		} catch(e) {
+			return false;
+		}
+	})();
+	
 	function capture() {
 		var state = {
 			write: global.document.write,
@@ -241,7 +252,8 @@
 			return t;
 		}
 		function getEl(id) {
-			var result = state.getEl.call(global.document,id);
+			var result = canCall ? state.getEl.call(global.document,id) : 
+				state.getEl(id);
 			return result || makeTemp(id);
 		}
 		return state;
