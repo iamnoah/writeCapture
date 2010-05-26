@@ -153,6 +153,11 @@ functions jQuery would otherwise provide and only adds about 800 bytes when
 Gzipped. The combined file is still under 2.5k compressed, so this is generally
 the second best option to using jQuery.
 
+To use nolib-support, just grab the latest writeCapture-x.x.x.-nolib.min.js 
+from the downloads section. It already includes writeCapture.js, so it's the 
+only file you need. If you'd like the unminified source for debugging, simply 
+include nolib-support.js before writeCapture.js.
+
 ## Implementing writeCaptureSupport ##
 
 If you don't want to use jQuery and you already use 
