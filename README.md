@@ -1,4 +1,8 @@
-# Why? #
+#  What is writeCapture.js? #
+
+It's been referred to as ["the Jesus Script"][jesus].
+Why? Probably because it will save your site from old, ugly, but still 
+necessary 3rd party scripts that use `document.write`. 
 
 Sometimes we are forced to use a third party script or markup that we simply 
 cannot change (usually an Ad server). While our websites are sleek and snappy 
@@ -271,6 +275,10 @@ URL, so you can replace the fixUrls function with one of your own or set it to
 `null` to prevent the hack all together. The function is passed the script URL
 and is expected to return the real path.
 
+# Satisfied Customers
+
+ * [newsweek.com](http://newsweek.com) [uses][jesus] writeCapture.js.
+ 
 # Caveats/Limitations #
  
 * If any of the included scripts are on another domain, they will have to be 
@@ -285,6 +293,10 @@ and is expected to return the real path.
   enough to use document.write, it's a possibility.  
 
 # Version History #
+
+## 0.9.6 ##
+
+ * Fixed error in IE when using `proxyGetElementById`.
 
 ## 0.9.5 ##
 
@@ -356,3 +368,5 @@ and is expected to return the real path.
 
    * first release. Any content but a single script tag would result in 
    partially async execution thanks to an overuse of defer.
+
+[jesus]: http://iamnoah.blogspot.com/2009/12/github-taming-documentwrite-and-nodejs.html?showComment=1275069903219#c7207630670857732321 "It will save your site from hacks."
