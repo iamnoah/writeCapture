@@ -210,13 +210,13 @@
 	})();
 	
 	function capture() {
+		var tempEls = [];
 		var state = {
 			write: global.document.write,
 			writeln: global.document.writeln,
 			getEl: global.document.getElementById,
-			tempEls: [],
 			finish: function() {
-				each(this.tempEls,function(it) {
+				each(tempEls,function(it) {
 					var real = global.document.getElementById(it.id);
 					if(!real) throw "No element with id: " + it.id;
 					each(it.el.childNodes,function(it) {
@@ -246,7 +246,7 @@
 		}
 		function makeTemp(id) {
 			var t = global.document.createElement('div');
-			state.tempEls.push({id:id,el:t});
+			tempEls.push({id:id,el:t});
 			// mock contentWindow in case it's supposed to be an iframe
 			t.contentWindow = { document: new MockDocument() };
 			return t;
@@ -361,6 +361,19 @@
 			debug.push(arguments);
 		};
 
+	function newCallback(fn) {
+		var id = nextId();
+		callbacks[id] = function() {
+			fn();
+			delete callbacks[id];
+		};
+		return id;
+	}
+	
+	function newCallbackTag(fn) {			
+		return TEMPLATE_TAG.replace(/%d/,newCallback(fn));
+	}	
+
 	/**
 	 * Sanitize the given HTML so that the scripts will execute with a modified
 	 * document.write that will capture the output and append it in the 
@@ -384,14 +397,11 @@
 		
 		// if a done callback is passed, append a script to call it
 		if(isFunction(done)) {
-			var doneId = nextId();
-			callbacks[doneId] = function() {
-				queue.push(done);
-				delete callbacks[doneId];
-			};
 			// no need to proxy the call to done, so we can append this to the 
 			// filtered HTML
-			doneHtml = TEMPLATE_TAG.replace(/%d/,doneId);
+			doneHtml = newCallbackTag(function() {
+				queue.push(done);
+			});
 		}
 		// for each tag, generate a function to load and eval the code and queue
 		// themselves
@@ -405,8 +415,6 @@
 					lang.toLowerCase().indexOf('javascript') !== -1;
 			
 			logDebug('replace',src,element);
-			var id = nextId(), divId = DIV_PREFIX + id;
-			var run;
 			
 			if(!isJs) {
 			    return element;
@@ -418,10 +426,10 @@
 			    src = self.fixUrls(src);
 			}
 			
-			callbacks[id] = queueScript;
+			var id = newCallback(queueScript), divId = DIV_PREFIX + id;
+			var run;			
 			function queueScript() {
 				queue.push(run);
-				delete callbacks[id]; 
 			}
 			
 			if(src) {
@@ -460,17 +468,13 @@
 				logError("<XHR for "+src+">",error);
 				queue.resume();
 			}
-			function setupResume(extra) {
-				var id = nextId();
-				callbacks[id] = function() {
-					if(extra) extra();
+			function setupResume() {
+				return newCallbackTag(function() {
 					queue.resume();
-					delete callbacks[id];
-				};
-				return TEMPLATE_TAG.replace(/%d/,id);
+				});
 			}
 			function loadAsync() {
-				var ready, scriptText, resume = setupResume();
+				var ready, scriptText;
 				function captureAndResume(script,status) {
 					if(!ready) {
 						// loaded before queue run, cache text
@@ -478,7 +482,7 @@
 						return;
 					}
 					try {
-						captureHtml(script, resume);
+						captureHtml(script, setupResume());
 					} catch(e) {
 						logError(script,e);
 					}
@@ -494,7 +498,8 @@
 				return function() {
 					ready = true;
 					if(scriptText) {
-						captureHtml(scriptText, resume);
+						// already loaded, so don't pause the queue and don't resume!
+						captureHtml(scriptText);
 					} else {
 						queue.pause();	
 					}
@@ -513,20 +518,19 @@
 				});
 				function captureAndResume(xhr,st,error) {
 					logDebug('out', src, state.out);
-					html(uncapture(state), setupResume(function() {
-					    state.finish();
-					}));
+					html(uncapture(state), 
+						newCallbackTag(state.finish) + setupResume());
 					logDebug('resume',src);
 				}
 			}
 			function captureHtml(script, cb) {
 				var state = captureWrite(script);
-				html(state.out, cb);
-				state.finish();
+				cb = newCallbackTag(state.finish) + (cb || '');
+				html(state.out,cb);
 			}
 			function html(markup,cb) {
-				$.replaceWith('#'+divId,sanitize(markup,null,queue) + (cb || ''));
-			}
+			 	$.replaceWith('#'+divId,sanitize(markup,null,queue) + (cb || ''));
+			} 
 			return openTag + TEMPLATE.replace(/%d/,id) + 
 				'</script><div style="display: none" id="'+divId+'"></div>';
 		}

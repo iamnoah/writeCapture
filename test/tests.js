@@ -158,7 +158,7 @@
 	// safari 3.2.1 loads and executes xdomain scripts synchronously
 	var safari321 = false & $.browser.safari && $.browser.version === "525.27.1";
 	function testSanitize(html,expected,sync,options,safariBug,testHtml) {
-		expect(3);
+		expect(sync === null ? 2 : 3);
 		if(!sync) $.ajaxSettings.cache = true;
 		var done = false;
 		if(!sync) stop();
@@ -170,7 +170,9 @@
 			equals(h($('#foo')[testHtml ? 'html' : 'text']()),h(expected));
 			if(!sync) start(); 
 		}
-		equals(done,!!sync || !!safariBug,"scripts sync");			
+		if(sync !== null) {
+			equals(done,!!sync || !!safariBug,"scripts sync");			
+		}
 	}
 	
 	test("inline",function() {
@@ -211,9 +213,10 @@
 			"FooBarBaz",true);
 	});
 	test("external async", function() {
+		// null for sync means we don't care. since it's local, this script might load before we can pause the queue
 		testSanitize(
 			'<script type="text/javascript" src="foo.js"> </script>BarBaz',
-			"FooBarBaz",false,{asyncAll: true});
+			"FooBarBaz",null,{asyncAll: true});
 	});
 
 	test("xdomain", function() {
