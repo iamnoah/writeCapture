@@ -294,7 +294,13 @@ and is expected to return the real path.
 
 # Version History #
 
-## 0.9.6 ##
+## 1.0 ##
+ 
+  * If it's good enough for [newsweek.com](http://newsweek.com) , it's good 
+     enough to be version 1.0.
+
+ * Fixed bug in pause/resume logic when using asyncAll that was preventing 
+    execution from resuming.
 
  * Fixed error in IE when using `proxyGetElementById`.
 
