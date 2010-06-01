@@ -351,11 +351,16 @@
 	var GLOBAL_Q = new Q();
 	
 	var debug = [];
-	var logDebug = window._debugWriteCapture ? function() {} : 
+	var logDebug = window._debugWriteCapture ? function() {} :
 		function (type,src,data) {
-			debug.push({type:type,src:src,data:data});
+		    debug.push({type:type,src:src,data:data});
 		};
-	
+
+	var logString = window._debugWriteCapture ? function() {} :
+		function () {
+			debug.push(arguments);
+		};
+
 	/**
 	 * Sanitize the given HTML so that the scripts will execute with a modified
 	 * document.write that will capture the output and append it in the 
