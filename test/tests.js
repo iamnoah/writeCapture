@@ -141,7 +141,7 @@
 	});
 	
 	function h(html) {
-	    return html.replace(/</g,'&lt;').toLowerCase();
+	    return html.replace(/</g,'&lt;').toLowerCase().replace(/[\s\r\n]+/g,' ');
 	}
 
 	
