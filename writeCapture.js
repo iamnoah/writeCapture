@@ -1,5 +1,5 @@
 /**
- * writeCapture.js v0.9.0
+ * writeCapture.js v0.9.5-SNAPSHOT
  *
  * @author noah <noah.sloan@gmail.com>
  * 
@@ -56,7 +56,7 @@
 	// utilities
 	function each(array,fn) {
 		for(var i =0, len = array.length; i < len; i++) { 
-			fn(array[i]); 
+			if( fn(array[i]) === false) return; 
 		}
 	}	
 	function isFunction(o) {
@@ -76,61 +76,83 @@
 		}
 		return result;
 	}
-	function defer(ctx,name) {
-		setTimeout(function() { ctx[name](); },1);
-	}
 	
-	/**
-	 * Provides a task queue for ensuring that scripts are run in order.
-	 * 
-	 * 
-	 */
-	function Q(parent) {
+	function SubQ(parent) {
 		this._queue = [];
 		this._children = [];
 		this._parent = parent;
-		if(parent) parent._register(this);
+		if(parent) parent._addChild(this)		
 	}
 	
-	Q.prototype = {
-		_paused: false,
+	SubQ.prototype = {
+		_addChild: function(q) {
+			this._children.push(q);
+		},
 		push: function (task) {
 			this._queue.push(task);
-			this._next();
+			this._bubble('_doRun');
 		},
 		pause: function() {
-			this._paused = true;
+			this._bubble('_doPause');
 		},
 		resume: function() {
-			this._paused = false;
-			this._next(true);
+			this._bubble('_doResume');
 		},
-		_register: function(child) {
-			this._children.push(child);
-		},
-		_isPaused: function() {
-			return this._paused || any(this._children,isPaused);
-			function isPaused(c) {
-				return c._isPaused();
+		_bubble: function(name) {
+			var root = this;
+			while(!root[name]) {
+				root = root._parent;
 			}
+			return root[name]();
 		},
-		_next: function(resuming) {
-			var next;
-			if(!this._isPaused()) {
-				if ((next = this._queue.shift())) {
-					next();
-					this._next();
-				} else if(this._parent) {
-					// !paused and queue is empty, so let parent queue resume running
-					if(resuming) {
-						// TODO why is the defer necessary? is it safe(deterministic)? i.e., could we ever have two timeouts at the same time? [testing says no, needs a proof]
-						defer(this._parent,'_next');
-					} else {
-						this._parent._next();
-					}
-				}
+		_next: function() {
+			if(any(this._children,runNext)) return true;
+			function runNext(c) {
+				return c._next();
+			}
+			var task = this._queue.shift();
+			if(task) {
+				task();
+			}
+			return !!task;
+		}
+	};
+	
+	/**
+	 * Provides a task queue for ensuring that scripts are run in order.
+	 *
+	 * The only public methods are push, pause and resume.
+	 */
+	function Q(parent) {
+		if(parent) {
+			return new SubQ(parent);
+		}
+		SubQ.call(this);
+		this.paused = 0;
+	}
+	
+	Q.prototype = (function() {
+		function f() {}
+		f.prototype = SubQ.prototype;
+		return new f();
+	})();
+	
+	Q.prototype._doRun = function() {
+		if(!this.running) {
+			this.running = true;
+			try {
+				while(!this.paused && this._next());
+			} finally {
+				this.running = false;
 			}
 		}
+	};
+	Q.prototype._doPause= function() {
+		this.paused++;
+	};
+	Q.prototype._doResume = function() {
+		this.paused--;
+		this._doRun();
 	};
 	
 	// TODO unit tests...
@@ -176,6 +198,17 @@
 		}
 	};
 	
+	// test for IE 6/7 issue (issue 6) that prevents us from using call
+	var canCall = (function() {
+		var f = { f: global.document.getElementById };
+		try {
+			f.f.call(global.document,'abc');
+			return true;
+		} catch(e) {
+			return false;
+		}
+	})();
+	
 	function capture() {
 		var state = {
 			write: global.document.write,
@@ -219,7 +252,8 @@
 			return t;
 		}
 		function getEl(id) {
-			var result = state.getEl.call(global.document,id);
+			var result = canCall ? state.getEl.call(global.document,id) : 
+				state.getEl(id);
 			return result || makeTemp(id);
 		}
 		return state;
@@ -266,7 +300,7 @@
 	}
 	
 	function attrPattern(name) {
-		return new RegExp(name+'=(?:(["\'])(.*?)\\1|([^\\s>]+))','i');
+		return new RegExp(name+'=(?:(["\'])([\\s\\S]*?)\\1|([^\\s>]+))','i');
 	}
 	
 	function matchAttr(name) {
@@ -286,6 +320,7 @@
 		DIV_PREFIX = "__document_write_ajax_div-",
 		TEMPLATE = "window['"+GLOBAL+"']['%d']();",
 		callbacks = global[GLOBAL] = {},
+		TEMPLATE_TAG = '<script type="text/javascript">' + TEMPLATE + '</script>',
 		global_id = 0;
 	function nextId() {
 		return (++global_id).toString();
@@ -314,6 +349,12 @@
 	// be the original document.write, probably messing up the page. At the 
 	// very least, A will get nothing and B will get the wrong content.
 	var GLOBAL_Q = new Q();
+	
+	var debug = [];
+	var logDebug = window._debugWriteCapture ? function() {} : 
+		function (type,src,data) {
+			debug.push({type:type,src:src,data:data});
+		};
 	
 	/**
 	 * Sanitize the given HTML so that the scripts will execute with a modified
@@ -345,8 +386,7 @@
 			};
 			// no need to proxy the call to done, so we can append this to the 
 			// filtered HTML
-			doneHtml = '<script type="text/javascript">' + 
-				TEMPLATE.replace(/%d/,doneId) + '</script>';
+			doneHtml = TEMPLATE_TAG.replace(/%d/,doneId);
 		}
 		// for each tag, generate a function to load and eval the code and queue
 		// themselves
@@ -359,6 +399,7 @@
 					type.toLowerCase().indexOf('javascript') !== -1 || 
 					lang.toLowerCase().indexOf('javascript') !== -1;
 			
+			logDebug('replace',src,element);
 			var id = nextId(), divId = DIV_PREFIX + id;
 			var run;
 			
@@ -405,15 +446,25 @@
 					url: src,
 					type: 'GET',
 					async: false,
-					success: captureHtml	
+					success: function(html) {
+						captureHtml(html);
+					}	
 				});
 			}
 			function logAjaxError(xhr,status,error) {
 				logError("<XHR for "+src+">",error);
 				queue.resume();
 			}
+			function setupResume() {
+				var id = nextId();
+				callbacks[id] = function() {
+					queue.resume();
+					delete callbacks[id];
+				};
+				return TEMPLATE_TAG.replace(/%d/,id);
+			}
 			function loadAsync() {
-				var ready, scriptText;
+				var ready, scriptText, resume = setupResume();
 				function captureAndResume(script,status) {
 					if(!ready) {
 						// loaded before queue run, cache text
@@ -421,11 +472,9 @@
 						return;
 					}
 					try {
-						captureHtml(script);
+						captureHtml(script, resume);
 					} catch(e) {
 						logError(script,e);
-					} finally {
-						queue.resume();
 					}
 				}
 				// start loading the text
@@ -439,7 +488,7 @@
 				return function() {
 					ready = true;
 					if(scriptText) {
-						captureHtml(scriptText);
+						captureHtml(scriptText, resume);
 					} else {
 						queue.pause();	
 					}
@@ -448,6 +497,7 @@
 			function loadXDomain(cb) {
 				var state = capture();
 				queue.pause(); // pause the queue while the script loads
+				logDebug('pause',src);
 				$.ajax({
 					url: src,
 					type: 'GET',
@@ -456,18 +506,19 @@
 					error: logAjaxError
 				});
 				function captureAndResume(xhr,st,error) {
-					html(uncapture(state));
+					logDebug('out', src, state.out);
+					html(uncapture(state), setupResume());
 					state.finish();
-					queue.resume();
+					logDebug('resume',src);
 				}
 			}
-			function captureHtml(script) {
+			function captureHtml(script, cb) {
 				var state = captureWrite(script);
-				html(state.out);
+				html(state.out, cb);
 				state.finish();
 			}
-			function html(markup) {
-				$.replaceWith('#'+divId,sanitize(markup,null,queue));
+			function html(markup,cb) {
+				$.replaceWith('#'+divId,sanitize(markup,null,queue) + (cb || ''));
 			}
 			return openTag + TEMPLATE.replace(/%d/,id) + 
 				'</script><div style="display: none" id="'+divId+'"></div>';
@@ -516,6 +567,7 @@
 			global[name] = this._original;
 			return this;
 		},
+		debug: debug,
 		/**
 		 * Enables a fun little hack that replaces document.getElementById and
 		 * creates temporary elements for the calling code to use.
@@ -524,6 +576,7 @@
 		// this is only for testing, please don't use these
 		_forTest: {
 			Q: Q,
+			GLOBAL_Q: GLOBAL_Q,
 			$: $,
 			matchAttr: matchAttr,
 			slice: slice,

@@ -1,10 +1,15 @@
 (function($,dwa) {
-	document.write = document.writeln = function() {
+	document.write = document.writeln = function(s) {
 		ok(false,"'real' document.write(ln) called!");
+		if(window.console) {
+			console.warn("wrote: ",s);
+		}
 	};
 	var fn = dwa._forTest;
 	// enable for all tests to catch side effects
 	dwa.proxyGetElementById = true;
+	
+	function notest() {}
 	
 	module("support");
 	test("slice",function() {
@@ -138,12 +143,14 @@
 	function h(html) {
 	    return html.replace(/</g,'&lt;').toLowerCase();
 	}
+
 	
 	module("parse");
 	test("matchAttr",function() {
 		var src = fn.matchAttr('src');
 		equals(src('<script src=http://foo.com/bar?baz=qux>'),'http://foo.com/bar?baz=qux');
 		equals(src('<script src=baz qux>'),'baz');
+		equals(src('<script language="JavaScript1.1" src="http://adfarm.mediaplex.com/ad/js/9609-84269-1178-\n4?mpt=20100510143412&mpvc=http://media.fastclick.net/w/click.here?cid=142556;mid=418766;sid=52463;m=1;c=0;forced_click=">\n</script>'),'http://adfarm.mediaplex.com/ad/js/9609-84269-1178-\n4?mpt=20100510143412&mpvc=http://media.fastclick.net/w/click.here?cid=142556;mid=418766;sid=52463;m=1;c=0;forced_click=');
 		equals(fn.matchAttr('type')('<script type="text/javascript">'),'text/javascript');
 	});
 	
@@ -165,6 +172,7 @@
 		}
 		equals(done,!!sync || !!safariBug,"scripts sync");			
 	}
+	
 	test("inline",function() {
 		testSanitize(
 			'Foo<script type="text/javascript">document.write("Bar");</script>Baz',
@@ -249,38 +257,29 @@
 		"FooBarbArexternal barbArBarBaz",false,{asyncAll: true},safari321);
 	});
 	
+	test("deeply nested",function() {
+		testSanitize(
+			'<script src="http://noahsloan.com/test/a.js"> </script>',
+			"Boo!Booooooring!",false);
+	});	
+	
 	test("2x xdomain sanitize",function() {
-		expect(9);
-		var cb = [], original = dwa._forTest.$.ajax, order = 1,
-			expected = ['foo.js','bar.js','baz.js'], ajaxCount = 0;
+		expect(6);
+		var order = 1;
 		stop();
-		dwa._forTest.$.ajax = function(options) {
-			var count = ajaxCount++;
-			equals(options.url,'http://someotherdomain.com/'+expected[count]);			
-			cb[count] = options.success;
-		};
-		$('#foo').html(dwa.sanitize('Foo<script type="text/javascript" src="http://someotherdomain.com/foo.js"></script>Baz',function() {
+		$('#foo').html(dwa.sanitize('Foo<script type="text/javascript" src="http://noahsloan.com/wc2x/foo.js"></script>Baz',function() {
 			equals($('#foo').text(),'FooBarBaz');
 			equals(order++,1,"order");
 		}));
-		$('#bar').html(dwa.sanitize('Qux<script type="text/javascript" src="http://someotherdomain.com/bar.js"></script>Quxxx',function() {
+		$('#bar').html(dwa.sanitize('Qux<script type="text/javascript" src="http://noahsloan.com/wc2x/bar.js"></script>Quxxx',function() {
 			equals($('#bar').text(),'QuxQuxxQuxxx');
 			equals(order++,2,"order");
 		}));
-		$('#baz').html(dwa.sanitize('<script type="text/javascript" src="http://someotherdomain.com/baz.js"></script>',function() {
+		$('#baz').html(dwa.sanitize('<script type="text/javascript" src="http://noahsloan.com/wc2x/baz.js"></script>',function() {
 			equals($('#baz').text(),'Baz');
 			equals(order++,3,"order");
-			dwa._forTest.$.ajax = original;
 			start();
-		}));	
-		setTimeout(function() {	
-			document.write('Bar');
-			cb[0]();
-			document.write('Quxx');
-			cb[1]();			
-			document.write('Baz');
-			cb[2]();
-		},50);
+		}));
 	});
 	
 	module("helpers");
