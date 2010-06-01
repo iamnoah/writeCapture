@@ -455,9 +455,10 @@
 				logError("<XHR for "+src+">",error);
 				queue.resume();
 			}
-			function setupResume() {
+			function setupResume(extra) {
 				var id = nextId();
 				callbacks[id] = function() {
+					if(extra) extra();
 					queue.resume();
 					delete callbacks[id];
 				};
@@ -507,8 +508,9 @@
 				});
 				function captureAndResume(xhr,st,error) {
 					logDebug('out', src, state.out);
-					html(uncapture(state), setupResume());
-					state.finish();
+					html(uncapture(state), setupResume(function() {
+					    state.finish();
+					}));
 					logDebug('resume',src);
 				}
 			}
