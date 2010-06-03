@@ -49,10 +49,23 @@
 				} else {
 					jQuery(parent).append( content );
 				}
+			},
+
+			copyAttrs: function(src,dest) {
+				var el = jQuery(dest), attrs = src.attributes;
+				for (var i = 0, len = attrs.length; i < len; i++) {
+					if(attrs[i] && attrs[i].value) {
+						try {
+							el.attr(attrs[i].name,attrs[i].value);
+						} catch(e) { }
+					}
+				}
 			}
 		};
 	})(global.jQuery);
-	
+
+	$.copyAttrs = $.copyAttrs || function() {};
+
 	// utilities
 	function each(array,fn) {
 		for(var i =0, len = array.length; i < len; i++) { 
@@ -225,9 +238,11 @@
 							'no element in writen markup with id ' + it.id);
 						return;
 					}
+
 					each(it.el.childNodes,function(it) {
 						real.appendChild(it);
 					});
+
 					if(real.contentWindow) {
 						// TODO why is the setTimeout necessary?
 						global.setTimeout(function() {
@@ -235,6 +250,7 @@
 								copyTo(real.contentWindow.document);
 						},1);
 					}
+					$.copyAttrs(it.el,real);
 				});
 			},
 			out: ''
