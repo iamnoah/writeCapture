@@ -220,7 +220,11 @@
 			finish: function() {
 				each(tempEls,function(it) {
 					var real = global.document.getElementById(it.id);
-					if(!real) throw "No element with id: " + it.id;
+					if(!real) {
+						logError('<proxyGetElementById - finish>',
+							'no element in writen markup with id ' + it.id);
+						return;
+					}
 					each(it.el.childNodes,function(it) {
 						real.appendChild(it);
 					});
