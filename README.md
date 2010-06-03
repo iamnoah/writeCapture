@@ -24,7 +24,10 @@ clean HTML, safe for injection into the document.
 # Usage #
 
 The easiest way to use writeCapture is through the 
-[jQuery plugin](/iamnoah/writeCapture/tree/master/plugin/). 
+[jQuery plugin](/iamnoah/writeCapture/tree/master/plugin/):
+
+    $('#target-el').writeCapture().html('<script src="http://evilAdServer.com/doSomeDocWrite.js"> </script>');
+
 The remainder of this documentation will describe somewhat lower level use 
 cases and go into the finer details of the library.
 
@@ -47,7 +50,7 @@ are also downloaded and executed synchronously by default.
 
 ## XDomain scripts (or asyncAll: true) ##
 
-If any of the scripts being loaded is on another domain (or asyncAll: ), they will be 
+If any of the scripts being loaded is on another domain (or you pass asyncAll: true), they will be 
 downloaded and run asynchronously, so any actions that script takes, including
 document.write calls, will happen later. If you need to take some action after 
 the scripts run, use the done callback:
