@@ -19,7 +19,7 @@
 		same((function() { return fn.slice(arguments,1); })(1,2,3,4,5),[2,3,4,5]);
 	});
 	test("captureWrite",function() {
-		equals(fn.captureWrite("document.write('FooBarBaz')").out,'FooBarBaz');
+		equals(fn.captureWrite("document.write('FooBarBaz')",{}).out,'FooBarBaz');
 	});
 	
 	module("support.Q");
@@ -163,7 +163,7 @@
 		var done = false;
 		if(!sync) stop();
 		if(options) options.done = finish;
-		$('#foo').html(dwa.sanitize( html, options || finish ));
+		$('#foo').html('<div/>').find('div').replaceWith(dwa.sanitize( html, options || finish ));
 		function finish(){ 
 			done = true; 
 			ok(done,"done called"); 
@@ -186,7 +186,18 @@
 			'Foo<script type="text/javascript" src="getById.js"> </script>Baz',
 			'FooHello WorldBaz',true);
 	});
-	
+
+	test("parentNode",function() { // issue #8
+		dwa.writeOnGetElementById = true;
+		testSanitize(
+			'<script type="text/javascript" src="getParent.js"> </script>',
+			'FooHello WorldBar',true);
+		expect(6); // testSanitize runs 3
+		ok($('#abc123').hasClass('parent1'));
+		ok($('#foo').hasClass('parent2'));
+		$('#abc123').removeAttr('class')
+		dwa.writeOnGetElementById = false;
+	});	
 	
 	test("xdomain getElementById",function() { // issue #5
 		testSanitize(

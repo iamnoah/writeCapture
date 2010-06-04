@@ -224,8 +224,9 @@
 		}
 	})();
 	
-	function capture() {
+	function capture(context) {
 		var tempEls = [];
+		var findEl;
 		var state = {
 			write: global.document.write,
 			writeln: global.document.writeln,
@@ -255,10 +256,16 @@
 			},
 			out: ''
 		};
+		context.state = state;
 		global.document.write = replacementWrite;
 		global.document.writeln = replacementWriteln;
 		if(self.proxyGetElementById) {
-			global.document.getElementById = getEl;			
+			findEl = makeTemp;
+			global.document.getElementById = getEl;
+		}
+		if(self.writeOnGetElementById) {
+			findEl = writeThenGet;
+			global.document.getElementById = getEl;
 		}
 		function replacementWrite(s) {
 			state.out +=  s;
@@ -273,17 +280,26 @@
 			t.contentWindow = { document: new MockDocument() };
 			return t;
 		}
+		function writeThenGet(id) {
+			var target = $.$(context.target);
+			var div = document.createElement('div');
+			target.parentNode.insertBefore(div,target);
+			$.replaceWith(div,state.out);
+			state.out = '';
+			return canCall ? state.getEl.call(global.document,id) : 
+				state.getEl(id);
+		}
 		function getEl(id) {
 			var result = canCall ? state.getEl.call(global.document,id) : 
 				state.getEl(id);
-			return result || makeTemp(id);
+			return result || findEl(id);
 		}
 		return state;
 	}
 	function uncapture(state) {
 		global.document.write = state.write;
 		global.document.writeln = state.writeln;
-		if(self.proxyGetElementById) {
+		if(self.proxyGetElementById || self.writeOnGetElementById) {
 			global.document.getElementById = state.getEl;
 		}
 		return state.out;
@@ -303,8 +319,8 @@
 	var logError = isFunction(global.console && console.error) ? 
 			doLog : ignore;
 	
-	function captureWrite(code) {
-		var state = capture();
+	function captureWrite(code,context) {
+		var state = capture(context);
 		try {
 			doEvil(clean(code));
 		} catch(e) {
@@ -410,7 +426,7 @@
 	 * responsiveness, but will delay completion of the scripts and may
 	 * cause problems with some scripts, so it defaults to false.
 	 */
-	function sanitize(html,options,parentQ) {
+	function sanitize(html,options,parentQ,parentContext) {
 		// each HTML fragment has it's own queue
 		var queue = parentQ && new Q(parentQ) || GLOBAL_Q;
 		options = normalizeOptions(options);
@@ -448,7 +464,8 @@
 			    src = self.fixUrls(src);
 			}
 			
-			var id = newCallback(queueScript), divId = DIV_PREFIX + id;
+			var id = newCallback(queueScript), divId = DIV_PREFIX + id,
+				context = { target: '#' + divId, parent: parentContext };
 			var run;			
 			function queueScript() {
 				queue.push(run);
@@ -528,7 +545,7 @@
 				};
 			}
 			function loadXDomain(cb) {
-				var state = capture();
+				var state = capture(context);
 				queue.pause(); // pause the queue while the script loads
 				logDebug('pause',src);
 				$.ajax({
@@ -546,15 +563,15 @@
 				}
 			}
 			function captureHtml(script, cb) {
-				var state = captureWrite(script);
+				var state = captureWrite(script,context);
 				cb = newCallbackTag(state.finish) + (cb || '');
 				html(state.out,cb);
 			}
 			function html(markup,cb) {
-			 	$.replaceWith('#'+divId,sanitize(markup,null,queue) + (cb || ''));
+			 	$.replaceWith(context.target,sanitize(markup,null,queue,context) + (cb || ''));
 			} 
-			return openTag + TEMPLATE.replace(/%d/,id) + 
-				'</script><div style="display: none" id="'+divId+'"></div>';
+			return '<div style="display: none" id="'+divId+'"></div>' + openTag +
+				TEMPLATE.replace(/%d/,id) + '</script>';
 		}
 	}
 	
