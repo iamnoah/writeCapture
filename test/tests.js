@@ -192,7 +192,7 @@
 		testSanitize(
 			'<script type="text/javascript" src="getParent.js"> </script>',
 			'FooHello WorldBar',true);
-		expect(6); // testSanitize runs 3
+		expect(5); // testSanitize runs 3
 		ok($('#abc123').hasClass('parent1'));
 		ok($('#foo').hasClass('parent2'));
 		$('#abc123').removeAttr('class')
