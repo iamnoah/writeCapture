@@ -168,6 +168,7 @@
 			done = true; 
 			ok(done,"done called"); 
 			equals(h($('#foo')[testHtml ? 'html' : 'text']()),h(expected));
+			dwa.writeOnGetElementById = false;
 			if(!sync) start(); 
 		}
 		if(sync !== null) {
@@ -195,8 +196,11 @@
 		expect(5); // testSanitize runs 3
 		ok($('#abc123').hasClass('parent1'));
 		ok($('#foo').hasClass('parent2'));
-		$('#abc123').removeAttr('class')
-		dwa.writeOnGetElementById = false;
+		$('#abc123').removeAttr('class')		
+	});	
+
+	test("var to global",function() {
+    	testSanitize( '<script>var hello = "Hello World";</script><script>document.write("Foo");document.write(hello);document.write("Bar");</script>', 'FooHello WorldBar', true);
 	});	
 	
 	test("xdomain getElementById",function() { // issue #5

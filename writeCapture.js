@@ -4,7 +4,12 @@
  * @author noah <noah.sloan@gmail.com>
  * 
  */
-(function($,global,doEvil) {
+(function($,global) {
+    function doEvil(code) {
+        var div = doc.createElement('div');
+        doc.body.insertBefore(div,null);
+        $.replaceWith(div,'<script type="text/javascript">'+code+'</script>');
+    }
 	// ensure we have our support functions
 	$ = $ || (function(jQuery) {
 		/**
@@ -727,4 +732,4 @@
 		sanitizeSerial: sanitizeSerial
 	};
 	
-})(this.writeCaptureSupport,this,eval);
+})(this.writeCaptureSupport,this);
