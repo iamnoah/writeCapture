@@ -51,6 +51,10 @@
 				}
 			},
 
+			onLoad: function(fn) {
+				jQuery(fn);
+			},
+			
 			copyAttrs: function(src,dest) {
 				var el = jQuery(dest), attrs = src.attributes;
 				for (var i = 0, len = attrs.length; i < len; i++) {
@@ -65,6 +69,10 @@
 	})(global.jQuery);
 
 	$.copyAttrs = $.copyAttrs || function() {};
+	$.onLoad = $.onLoad || function() {
+		throw "error: autoAsync cannot be used without jQuery " +
+			"or defining writeCaptureSupport.onLoad";
+	};
 
 	// utilities
 	function each(array,fn) {
@@ -605,6 +613,69 @@
 		}
 	}
 	
+	function findLastChild(el) {
+		var n = el;
+		while(n && n.nodeType === 1) {
+			el = n;
+			n = n.lastChild;
+			// last child may not be an element
+			while(n && n.nodeType !== 1) {
+				n = n.previousSibling;
+			}
+		}
+		return el;
+	}
+		
+	/**
+	  * Experimental - automatically captures document.write calls and 
+	  * defers them untill after page load.
+	  * @param {Function} [done] optional callback for when all the 
+	  * captured content has been loaded.
+	  */
+	function autoCapture(done) {
+		var doc = global.document, 
+			write = doc.write, 
+			writeln = doc.writeln,
+			currentScript, 
+			autoQ = [];
+		doc.writeln = function(s) {
+			doc.write(s+'\n');
+		}
+		var state;
+		doc.write = function(s) {
+			var scriptEl = findLastChild(doc.body);
+			if(scriptEl !== currentScript) {
+				currentScript = scriptEl;
+				autoQ.push(state = {
+					el: scriptEl,
+					out: []
+				});					
+			}
+			state.out.push(s);
+		}
+		$.onLoad(function() {			
+			// for each script, append a div immediately after it, 
+			// then replace the div with the sanitized output
+			var el, div, out, safe, doneFn;
+			done = normalizeOptions(done);
+			doneFn = done.done;
+			done.done = function() {
+				doc.write = write;
+				doc.writeln = writeln;
+				if(doneFn) doneFn();				
+			};
+			for(var i = 0, len = autoQ.length; i < len; i++ ) {
+				el = autoQ[i].el;
+				div = doc.createElement('div');
+				el.parentNode.insertBefore( div, el.nextSibling );
+				out = autoQ[i].out.join('');
+				// only the last snippet gets passed the callback
+				safe = len - i === 1 ? sanitize(out,done) : sanitize(out);
+				$.replaceWith(div,safe);
+			}
+		});
+	}
+	
 	var name = 'writeCapture';
 	var self = global[name] = {
 		_original: global[name],
@@ -651,6 +722,7 @@
 				}
 			});
 		},
+		autoAsync: autoCapture,
 		sanitize: sanitize,
 		sanitizeSerial: sanitizeSerial
 	};
