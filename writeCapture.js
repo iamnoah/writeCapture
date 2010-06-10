@@ -5,6 +5,7 @@
  * 
  */
 (function($,global) {
+    var doc = global.document;
     function doEvil(code) {
         var div = doc.createElement('div');
         doc.body.insertBefore(div,null);
@@ -228,9 +229,9 @@
 	
 	// test for IE 6/7 issue (issue 6) that prevents us from using call
 	var canCall = (function() {
-		var f = { f: global.document.getElementById };
+		var f = { f: doc.getElementById };
 		try {
-			f.f.call(global.document,'abc');
+			f.f.call(doc,'abc');
 			return true;
 		} catch(e) {
 			return false;
@@ -241,12 +242,12 @@
 		var tempEls = [];
 		var findEl;
 		var state = {
-			write: global.document.write,
-			writeln: global.document.writeln,
-			getEl: global.document.getElementById,
+			write: doc.write,
+			writeln: doc.writeln,
+			getEl: doc.getElementById,
 			finish: function() {
 				each(tempEls,function(it) {
-					var real = global.document.getElementById(it.id);
+					var real = doc.getElementById(it.id);
 					if(!real) {
 						logError('<proxyGetElementById - finish>',
 							'no element in writen markup with id ' + it.id);
@@ -270,15 +271,15 @@
 			out: ''
 		};
 		context.state = state;
-		global.document.write = replacementWrite;
-		global.document.writeln = replacementWriteln;
+		doc.write = replacementWrite;
+		doc.writeln = replacementWriteln;
 		if(self.proxyGetElementById) {
 			findEl = makeTemp;
-			global.document.getElementById = getEl;
+			doc.getElementById = getEl;
 		}
 		if(self.writeOnGetElementById) {
 			findEl = writeThenGet;
-			global.document.getElementById = getEl;
+			doc.getElementById = getEl;
 		}
 		function replacementWrite(s) {
 			state.out +=  s;
@@ -287,7 +288,7 @@
 			state.out +=  s + '\n';
 		}
 		function makeTemp(id) {
-			var t = global.document.createElement('div');
+			var t = doc.createElement('div');
 			tempEls.push({id:id,el:t});
 			// mock contentWindow in case it's supposed to be an iframe
 			t.contentWindow = { document: new MockDocument() };
@@ -295,25 +296,25 @@
 		}
 		function writeThenGet(id) {
 			var target = $.$(context.target);
-			var div = document.createElement('div');
+			var div = doc.createElement('div');
 			target.parentNode.insertBefore(div,target);
 			$.replaceWith(div,state.out);
 			state.out = '';
-			return canCall ? state.getEl.call(global.document,id) : 
+			return canCall ? state.getEl.call(doc,id) : 
 				state.getEl(id);
 		}
 		function getEl(id) {
-			var result = canCall ? state.getEl.call(global.document,id) : 
+			var result = canCall ? state.getEl.call(doc,id) : 
 				state.getEl(id);
 			return result || findEl(id);
 		}
 		return state;
 	}
 	function uncapture(state) {
-		global.document.write = state.write;
-		global.document.writeln = state.writeln;
+		doc.write = state.write;
+		doc.writeln = state.writeln;
 		if(self.proxyGetElementById || self.writeOnGetElementById) {
-			global.document.getElementById = state.getEl;
+			doc.getElementById = state.getEl;
 		}
 		return state.out;
 	}
@@ -638,8 +639,7 @@
 	  * captured content has been loaded.
 	  */
 	function autoCapture(done) {
-		var doc = global.document, 
-			write = doc.write, 
+		var write = doc.write, 
 			writeln = doc.writeln,
 			currentScript, 
 			autoQ = [];
