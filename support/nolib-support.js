@@ -1,4 +1,46 @@
-(function(global,globalEval) {
+(function(global) {
+    // scriptEval & globalEval copied almost verbatim from jQuery 1.3.2
+    var scriptEval = (function() {
+		var script = document.createElement("script");
+		var id = "script" + (new Date).getTime();
+		var root = document.documentElement;
+		
+    	script.type = "text/javascript";
+    	try {
+    		script.appendChild( document.createTextNode( "window." + id + "=1;" ) );
+    	} catch(e){}
+
+    	root.insertBefore( script, root.firstChild );
+
+    	// Make sure that the execution of code works by injecting a script
+    	// tag with appendChild/createTextNode
+    	// (IE doesn't support this, fails, and uses .text instead)
+    	if ( window[ id ] ) {
+    	    delete window[ id ];
+    		return true;    		
+    	}
+		return false;
+    })();
+    
+    function globalEval(data) {
+    	if ( data && /\S/.test(data) ) {
+			// Inspired by code by Andrea Giammarchi
+			// http://webreflection.blogspot.com/2007/08/global-scope-evaluation-and-dom.html
+			var head = document.getElementsByTagName("head")[0] || document.documentElement,
+				script = document.createElement("script");
+
+			script.type = "text/javascript";
+			if ( scriptEval )
+				script.appendChild( document.createTextNode( data ) );
+			else
+				script.text = data;
+
+			// Use insertBefore instead of appendChild  to circumvent an IE6 bug.
+			// This arises when a base node is used (#2709).
+			head.insertBefore( script, head.firstChild );
+			head.removeChild( script );
+		}    
+    }
 	global.writeCaptureSupport = {
 		_original: global.writeCaptureSupport,
 		noConflict: function() {
@@ -69,7 +111,7 @@
 				parent = el.parentNode || el.ownerDocument,
 				work = document.createElement('div'),
 				scripts = [],
-				clearHTML = content.replace(/<script(?:.*?)>(.*?)<\/script>/g,function(all,code) {
+				clearHTML = content.replace(/<script(?:[\s\S]*?)>([\S\s]*?)<\/script>/g,function(all,code) {
 					scripts.push(code);
 					return "";
 				});
@@ -131,4 +173,4 @@
 		head.appendChild(script);
 	}
 
-})(this,eval);
+})(this);
