@@ -23,6 +23,51 @@ clean HTML, safe for injection into the document.
 
 # Usage #
 
+## Automatic Asynchronous Writes ##
+
+Perhaps the most common use for writeCapture is to prevent ads and other 3rd 
+party scripts that use `document.write` from blocking the DOM while the page 
+loads. writeCapture has a special method specifically for this case. Simply call
+
+    $.writeCapture.autoAsync();
+
+at some point in the document before the scripts that use `document.write`.
+
+Note that at this time, `autoAsync` is only supported when jQuery is available.
+However, you can easily add support to you page by defining 
+`writeCaptureSupport.onLoad`. See "Implementing writeCaptureSupport" below.
+
+It's important to note that this will not prevent a cross-domain script tag 
+placed directly in the page from DOM blocking if the external server is down, 
+or running slow due to heavy load. For example, in the following markup, the
+browser will block at the script trying to load foo.js from example.com.
+
+    <script src="http://example.com/foo.js" ...
+
+However, if your script uses document.write to write out the external script 
+tag like (which is actually quite common) the browser will *not* block:
+
+    <script>document.write('<scrip'+'t src="http://example.com/foo.js"> </s'+'cript>');</script>
+
+If you would rather not add more code using `document.write` you can use a 
+placeholder instead:
+
+    <div id="placeholder"> </div>
+    
+    <script> 
+    $(document).ready(function() {
+    	$('#placeholder').writeCapture().html('<script src="http://example.com/foo.js"> </script>');
+    });
+    </script>
+
+Note that when using the placeholder method, calling `autoAsync` is unnecessary.
+
+## Other Usage ##
+
+If `autoAsync` isn't working for your script, or you have another use case like 
+Ajax loading HTML containing scripts, writeCapture provides a flexible API to
+accomplish this.
+
 The easiest way to use writeCapture is through the 
 [jQuery plugin](/iamnoah/writeCapture/tree/master/plugin/):
 
@@ -165,6 +210,8 @@ from the downloads section. It already includes writeCapture.js, so it's the
 only file you need. If you'd like the unminified source for debugging, simply 
 include nolib-support.js before writeCapture.js.
 
+Note that nolib does not implement `onLoad`, which is required for `autoAsync`.
+
 ## Implementing writeCaptureSupport ##
 
 If you don't want to use jQuery and you already use 
@@ -229,9 +276,46 @@ to replace.
 This function (and `replaceWith`) should throw an informative error if an 
 unsupported selector is given.
 
+### onLoad (optional) ###
+
+Equivalent to jQuery's `$(document).ready()`, Prototype's 
+`Event.observe(window, 'load')`, dojo's `dojo.addOnLoad()` and Moo Tool's
+`window.addEvent('domready')` or plain old `window.onload = `.
+Takes a function and calls it when the document has loaded.
+
+This method is optional but is required to use `autoAsync`. If you are using
+nolib-support.js, which does not implement `onLoad`, you can implement it easily:
+
+    writeCaptureSupport.onLoad = function(fn) {
+        // note that this is a poor implementation, use/copy a framework
+        window.onload = fn;
+    };
+
+### copyAttrs (optional) ###
+
+Used by `proxyGetElementById` to copy attributes from the proxy div to 
+the real element. If not present, the attributes are not copied, which 
+usually wont matter.
+
 # Hacks #
 
-## proxyGetElementById - DOM manipulation mixed with `document.write`##
+Note that all of these hacks can be configured globally and per call. Per call 
+settings override global settings. e.g.,
+
+    writeCapture.proxyGetElementById = true;
+    // getElementById is proxied
+    writeCapture.sanitize(html);
+    // getElementById is NOT proxied
+    writeCapture.sanitize(html,{proxyGetElementById: false});
+    // there a many options
+    writeCapture.sanitize(html,{
+        fixUrls: myFixUrlsFn,
+        writeOnGetElementById: true,
+        done: function() { alert('All done!'); },
+        asyncAll: true
+    });
+
+## DOM manipulation mixed with `document.write` - proxyGetElementById ##
 
 Amazingly enough, some scripts will mix DOM manipulation methods like 
 `element.appendChild` with `document.write`. In situations like these, there
@@ -241,14 +325,26 @@ your scripts:
      writeCapture.proxyGetElementById = true;
      // or for the jQuery plugin:
      jQuery.writeCapture.proxyGetElementById = true;
+     // or per call
+     writeCapture.sanitize(theHtml,{proxyGetElementById:true});
+     $(something).writeCapture().html(theHtml,{proxyGetElementById:true});
 
 Enabling the hack will proxy `document.getElementById` and return a temporary 
 element if no element with that id exists. Once the script's HTML has been 
 written, the contents of the temporary element are appended to the real 
-element. Obviously it would be easy to construct a script that still failed 
-with this hack enabled however, it will help in some cases.
+element.
 
-### Mock iframes ###
+### writeOnGetElementById ###
+
+For some scripts, the proxy approach will fail. For example, a script that 
+tries to access the parentNode property will fail because the proxy node has 
+no parent. In these extreme cases, `writeOnGetElementById` can help, although 
+it has it's own set of problems and should only be used a last resort. It is enabled 
+and disabled in the same way as `proxyGetElementById`:
+
+    writeCapture.writeOnGetElementById = true;
+
+### Implementation - Mock iframes ###
 
 Some scripts even go so far as to create iframes using DOM manipulation and 
 then write to them using `document.write`. Ironically, these writes are 
@@ -261,6 +357,8 @@ document. So in addition to creating a proxy div element for missing elements,
 we also have to mock the `contentWindow` property and provide a document for 
 the script to write to. Again, there are surely cases where this approach will
 fail, but it will help in many.
+
+`writeOnGetElementById` does not use mock iframes.
 
 ## fixUrls - URLs with encoded ampersands ##
 
@@ -296,6 +394,22 @@ and is expected to return the real path.
   enough to use document.write, it's a possibility.  
 
 # Version History #
+
+## 1.0.5 ##
+
+  * Added new Hacks:
+  
+    * `proxyGetElementById` will attempt to copy attributes from the proxy 
+    when jQuery is present. Should improve compatibility in some cases.
+    
+    * `writeOnGetElementById` for when proxying isn't enough.
+    
+  * New Experimental Fearture: `autoAsync`
+  
+  * All hacks can noew be set globaly and/or per call.
+  
+  * No more eval! Fixes a problem in IE where `var` variables were not visible 
+  to other scripts.
 
 ## 1.0 ##
  

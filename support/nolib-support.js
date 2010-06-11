@@ -89,7 +89,7 @@
 					if ( options.async )
 						xhr = null;
 				}
-			};
+			}
 
 			if ( options.async ) {
 				// poll for changes
