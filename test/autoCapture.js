@@ -7,8 +7,8 @@
 	};
 	function h(html) {
 	    return $('<div/>').html(html).html().replace(/</g,'&lt;').toLowerCase().replace(/[\s\r\n]+/g,' ');
-	}	
-	dwa._forTest.$.onLoad = function(fn) {
+	}
+	(window.writeCaptureSupport ? writeCaptureSupport : dwa._forTest.$).onLoad = function(fn) {
 		setTimeout(fn,1);
 	};
 	var fn = dwa._forTest;

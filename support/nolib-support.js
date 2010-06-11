@@ -1,29 +1,30 @@
 (function(global) {
-    // scriptEval & globalEval copied almost verbatim from jQuery 1.3.2
-    var scriptEval = (function() {
+	var sup = global.writeCaptureSupport  = global.writeCaptureSupport || {};
+	// scriptEval & globalEval copied almost verbatim from jQuery 1.3.2
+	var scriptEval = (function() {
 		var script = document.createElement("script");
 		var id = "script" + (new Date).getTime();
 		var root = document.documentElement;
 		
-    	script.type = "text/javascript";
-    	try {
-    		script.appendChild( document.createTextNode( "window." + id + "=1;" ) );
-    	} catch(e){}
+		script.type = "text/javascript";
+		try {
+			script.appendChild( document.createTextNode( "window." + id + "=1;" ) );
+		} catch(e){}
 
-    	root.insertBefore( script, root.firstChild );
+		root.insertBefore( script, root.firstChild );
 
-    	// Make sure that the execution of code works by injecting a script
-    	// tag with appendChild/createTextNode
-    	// (IE doesn't support this, fails, and uses .text instead)
-    	if ( window[ id ] ) {
-    	    delete window[ id ];
-    		return true;    		
-    	}
+		// Make sure that the execution of code works by injecting a script
+		// tag with appendChild/createTextNode
+		// (IE doesn't support this, fails, and uses .text instead)
+		if ( window[ id ] ) {
+			delete window[ id ];
+			return true;
+		}
 		return false;
-    })();
-    
-    function globalEval(data) {
-    	if ( data && /\S/.test(data) ) {
+	})();
+
+	function globalEval(data) {
+	if ( data && /\S/.test(data) ) {
 			// Inspired by code by Andrea Giammarchi
 			// http://webreflection.blogspot.com/2007/08/global-scope-evaluation-and-dom.html
 			var head = document.getElementsByTagName("head")[0] || document.documentElement,
