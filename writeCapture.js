@@ -457,7 +457,7 @@
 		// each HTML fragment has it's own queue
 		var queue = parentQ && new Q(parentQ) || GLOBAL_Q;
 		options = normalizeOptions(options);
-		var done = options.done;
+		var done = getOption('done',options);
 		var doneHtml = '';
 		
 		var fixUrls = getOption('fixUrls',options);
@@ -509,10 +509,10 @@
 					run = loadXDomain;
 				} else {
 					// can be loaded then eval()d
-					if(options.asyncAll) {
+					if(getOption('asyncAll',options)) {
 						run = loadAsync();
 					} else {
-						run = loadSync; 
+						run = loadSync;
 					}
 				}
 			} else {
