@@ -19,7 +19,7 @@
 		same((function() { return fn.slice(arguments,1); })(1,2,3,4,5),[2,3,4,5]);
 	});
 	test("captureWrite",function() {
-		equals(fn.captureWrite("document.write('FooBarBaz')").out,'FooBarBaz');
+		equals(fn.captureWrite("document.write('FooBarBaz')",{}).out,'FooBarBaz');
 	});
 	
 	module("support.Q");
@@ -141,7 +141,7 @@
 	});
 	
 	function h(html) {
-	    return html.replace(/</g,'&lt;').toLowerCase();
+	    return html.replace(/</g,'&lt;').toLowerCase().replace(/[\s\r\n]+/g,' ');
 	}
 
 	
@@ -158,19 +158,22 @@
 	// safari 3.2.1 loads and executes xdomain scripts synchronously
 	var safari321 = false & $.browser.safari && $.browser.version === "525.27.1";
 	function testSanitize(html,expected,sync,options,safariBug,testHtml) {
-		expect(3);
+		expect(sync === null ? 2 : 3);
 		if(!sync) $.ajaxSettings.cache = true;
 		var done = false;
 		if(!sync) stop();
 		if(options) options.done = finish;
-		$('#foo').html(dwa.sanitize( html, options || finish ));
+		$('#foo').html('<div/>').find('div').replaceWith(dwa.sanitize( html, options || finish ));
 		function finish(){ 
 			done = true; 
 			ok(done,"done called"); 
 			equals(h($('#foo')[testHtml ? 'html' : 'text']()),h(expected));
+			dwa.writeOnGetElementById = false;
 			if(!sync) start(); 
 		}
-		equals(done,!!sync || !!safariBug,"scripts sync");			
+		if(sync !== null) {
+			equals(done,!!sync || !!safariBug,"scripts sync");			
+		}
 	}
 	
 	test("inline",function() {
@@ -184,7 +187,20 @@
 			'Foo<script type="text/javascript" src="getById.js"> </script>Baz',
 			'FooHello WorldBaz',true);
 	});
-	
+
+	test("parentNode",function() { // issue #8		
+		testSanitize(
+			'<script type="text/javascript" src="getParent.js"> </script>',
+			'FooHello WorldBar',true,{writeOnGetElementById:true});
+		expect(5); // testSanitize runs 3
+		ok($('#abc123').hasClass('parent1'));
+		ok($('#foo').hasClass('parent2'));
+		$('#abc123').removeAttr('class')		
+	});	
+
+	test("var to global",function() {
+    	testSanitize( '<script>var hello = "Hello World";</script><script>document.write("Foo");document.write(hello);document.write("Bar");</script>', 'FooHello WorldBar', true);
+	});	
 	
 	test("xdomain getElementById",function() { // issue #5
 		testSanitize(
@@ -201,7 +217,7 @@
 	test("xhtml",function() {
 		testSanitize(
 			'Foo<script type="text/javascript">document.write(\'<span>Bar<input name="Bar"></span>\');</script>Baz',
-			$('<div/>').append('Foo<span>Bar<input name="Bar"/></span>Baz').html(),true,null,false,true);
+			$('<div/>').html('Foo<span>Bar<input name="Bar"/></span>Baz').html(),true,null,false,true);
 	});
 	
 
@@ -211,9 +227,10 @@
 			"FooBarBaz",true);
 	});
 	test("external async", function() {
+		// null for sync means we don't care. since it's local, this script might load before we can pause the queue
 		testSanitize(
 			'<script type="text/javascript" src="foo.js"> </script>BarBaz',
-			"FooBarBaz",false,{asyncAll: true});
+			"FooBarBaz",null,{asyncAll: true});
 	});
 
 	test("xdomain", function() {

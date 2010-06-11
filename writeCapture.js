@@ -1,10 +1,16 @@
 /**
- * writeCapture.js v0.9.5-SNAPSHOT
+ * writeCapture.js v1.0.5-SNAPSHOT
  *
  * @author noah <noah.sloan@gmail.com>
  * 
  */
-(function($,global,doEvil) {
+(function($,global) {
+	var doc = global.document;
+	function doEvil(code) {
+		var div = doc.createElement('div');
+		doc.body.insertBefore(div,null);
+		$.replaceWith(div,'<script type="text/javascript">'+code+'</script>');
+	}
 	// ensure we have our support functions
 	$ = $ || (function(jQuery) {
 		/**
@@ -38,8 +44,8 @@
 			 * and executed if present.
 			 */
 			replaceWith: function(selector,content) {
-			    // jQuery 1.4? has a bug in replaceWith so we can't use it directly
-			    var el = jQuery(selector)[0];
+				// jQuery 1.4? has a bug in replaceWith so we can't use it directly
+				var el = jQuery(selector)[0];
 				var next = el.nextSibling, parent = el.parentNode;
 
 				jQuery(el).remove();
@@ -49,10 +55,31 @@
 				} else {
 					jQuery(parent).append( content );
 				}
+			},
+
+			onLoad: function(fn) {
+				jQuery(fn);
+			},
+			
+			copyAttrs: function(src,dest) {
+				var el = jQuery(dest), attrs = src.attributes;
+				for (var i = 0, len = attrs.length; i < len; i++) {
+					if(attrs[i] && attrs[i].value) {
+						try {
+							el.attr(attrs[i].name,attrs[i].value);
+						} catch(e) { }
+					}
+				}
 			}
 		};
 	})(global.jQuery);
-	
+
+	$.copyAttrs = $.copyAttrs || function() {};
+	$.onLoad = $.onLoad || function() {
+		throw "error: autoAsync cannot be used without jQuery " +
+			"or defining writeCaptureSupport.onLoad";
+	};
+
 	// utilities
 	function each(array,fn) {
 		for(var i =0, len = array.length; i < len; i++) { 
@@ -81,7 +108,7 @@
 		this._queue = [];
 		this._children = [];
 		this._parent = parent;
-		if(parent) parent._addChild(this)		
+		if(parent) parent._addChild(this);
 	}
 	
 	SubQ.prototype = {
@@ -141,7 +168,9 @@
 		if(!this.running) {
 			this.running = true;
 			try {
-				while(!this.paused && this._next());
+				// just in case there is a bug, always resume 
+				// if paused is less than 1
+				while(this.paused < 1 && this._next());
 			} finally {
 				this.running = false;
 			}
@@ -200,43 +229,70 @@
 	
 	// test for IE 6/7 issue (issue 6) that prevents us from using call
 	var canCall = (function() {
-		var f = { f: global.document.getElementById };
+		var f = { f: doc.getElementById };
 		try {
-			f.f.call(global.document,'abc');
+			f.f.call(doc,'abc');
 			return true;
 		} catch(e) {
 			return false;
 		}
 	})();
 	
-	function capture() {
-		var state = {
-			write: global.document.write,
-			writeln: global.document.writeln,
-			getEl: global.document.getElementById,
-			tempEls: [],
-			finish: function() {
-				each(this.tempEls,function(it) {
-					var real = global.document.getElementById(it.id);
-					if(!real) throw "No element with id: " + it.id;
-					each(it.el.childNodes,function(it) {
-						real.appendChild(it);
-					});
-					if(real.contentWindow) {
-						// TODO why is the setTimeout necessary?
-						global.setTimeout(function() {
-							it.el.contentWindow.document.
-								copyTo(real.contentWindow.document);
-						},1);
-					}
-				});
-			},
-			out: ''
-		};
-		global.document.write = replacementWrite;
-		global.document.writeln = replacementWriteln;
-		if(self.proxyGetElementById) {
-			global.document.getElementById = getEl;			
+	function unProxy(elements) {
+		each(elements,function(it) {
+			var real = doc.getElementById(it.id);
+			if(!real) {
+				logError('<proxyGetElementById - finish>',
+					'no element in writen markup with id ' + it.id);
+				return;
+			}
+
+			each(it.el.childNodes,function(it) {
+				real.appendChild(it);
+			});
+
+			if(real.contentWindow) {
+				// TODO why is the setTimeout necessary?
+				global.setTimeout(function() {
+					it.el.contentWindow.document.
+						copyTo(real.contentWindow.document);
+				},1);
+			}
+			$.copyAttrs(it.el,real);
+		});
+	}
+	
+	function getOption(name,options) {
+		if(options && options[name] === false) {
+			return false;
+		}
+		return options && options[name] || self[name];
+	}
+	
+	function capture(context,options) {
+		var tempEls = [],
+			proxy = getOption('proxyGetElementById',options),
+			writeOnGet = getOption('writeOnGetElementById',options),	
+			state = {
+				write: doc.write,
+				writeln: doc.writeln,
+				finish: function() {},
+				out: ''
+			};
+		context.state = state;
+		doc.write = replacementWrite;
+		doc.writeln = replacementWriteln;
+		if(proxy || writeOnGet) {
+			state.getEl = doc.getElementById;
+			doc.getElementById = getEl;
+			if(writeOnGet) {
+				findEl = writeThenGet;
+			} else {
+				findEl = makeTemp;
+				state.finish = function() {
+					unProxy(tempEls);
+				};
+			}
 		}
 		function replacementWrite(s) {
 			state.out +=  s;
@@ -245,24 +301,33 @@
 			state.out +=  s + '\n';
 		}
 		function makeTemp(id) {
-			var t = global.document.createElement('div');
-			state.tempEls.push({id:id,el:t});
+			var t = doc.createElement('div');
+			tempEls.push({id:id,el:t});
 			// mock contentWindow in case it's supposed to be an iframe
 			t.contentWindow = { document: new MockDocument() };
 			return t;
 		}
-		function getEl(id) {
-			var result = canCall ? state.getEl.call(global.document,id) : 
+		function writeThenGet(id) {
+			var target = $.$(context.target);
+			var div = doc.createElement('div');
+			target.parentNode.insertBefore(div,target);
+			$.replaceWith(div,state.out);
+			state.out = '';
+			return canCall ? state.getEl.call(doc,id) : 
 				state.getEl(id);
-			return result || makeTemp(id);
+		}
+		function getEl(id) {
+			var result = canCall ? state.getEl.call(doc,id) : 
+				state.getEl(id);
+			return result || findEl(id);
 		}
 		return state;
 	}
 	function uncapture(state) {
-		global.document.write = state.write;
-		global.document.writeln = state.writeln;
-		if(self.proxyGetElementById) {
-			global.document.getElementById = state.getEl;
+		doc.write = state.write;
+		doc.writeln = state.writeln;
+		if(state.getEl) {
+			doc.getElementById = state.getEl;
 		}
 		return state.out;
 	}
@@ -281,8 +346,8 @@
 	var logError = isFunction(global.console && console.error) ? 
 			doLog : ignore;
 	
-	function captureWrite(code) {
-		var state = capture();
+	function captureWrite(code,context,options) {
+		var state = capture(context,options);
 		try {
 			doEvil(clean(code));
 		} catch(e) {
@@ -351,11 +416,29 @@
 	var GLOBAL_Q = new Q();
 	
 	var debug = [];
-	var logDebug = window._debugWriteCapture ? function() {} : 
+	var logDebug = window._debugWriteCapture ? function() {} :
 		function (type,src,data) {
-			debug.push({type:type,src:src,data:data});
+		    debug.push({type:type,src:src,data:data});
 		};
+
+	var logString = window._debugWriteCapture ? function() {} :
+		function () {
+			debug.push(arguments);
+		};
+
+	function newCallback(fn) {
+		var id = nextId();
+		callbacks[id] = function() {
+			fn();
+			delete callbacks[id];
+		};
+		return id;
+	}
 	
+	function newCallbackTag(fn) {			
+		return TEMPLATE_TAG.replace(/%d/,newCallback(fn));
+	}	
+
 	/**
 	 * Sanitize the given HTML so that the scripts will execute with a modified
 	 * document.write that will capture the output and append it in the 
@@ -370,23 +453,25 @@
 	 * responsiveness, but will delay completion of the scripts and may
 	 * cause problems with some scripts, so it defaults to false.
 	 */
-	function sanitize(html,options,parentQ) {
+	function sanitize(html,options,parentQ,parentContext) {
 		// each HTML fragment has it's own queue
 		var queue = parentQ && new Q(parentQ) || GLOBAL_Q;
 		options = normalizeOptions(options);
 		var done = options.done;
 		var doneHtml = '';
 		
+		var fixUrls = getOption('fixUrls',options);
+		if(!isFunction(fixUrls)) {
+			fixUrls = function(src) { return src; };
+		}
+		
 		// if a done callback is passed, append a script to call it
 		if(isFunction(done)) {
-			var doneId = nextId();
-			callbacks[doneId] = function() {
-				queue.push(done);
-				delete callbacks[doneId];
-			};
 			// no need to proxy the call to done, so we can append this to the 
 			// filtered HTML
-			doneHtml = TEMPLATE_TAG.replace(/%d/,doneId);
+			doneHtml = newCallbackTag(function() {
+				queue.push(done);
+			});
 		}
 		// for each tag, generate a function to load and eval the code and queue
 		// themselves
@@ -400,26 +485,23 @@
 					lang.toLowerCase().indexOf('javascript') !== -1;
 			
 			logDebug('replace',src,element);
-			var id = nextId(), divId = DIV_PREFIX + id;
-			var run;
 			
 			if(!isJs) {
 			    return element;
 			}
 			
-			// fix for the inline script that writes a script tag with encoded 
-			// ampersands hack (more comon than you'd think)
-			if(src && isFunction(self.fixUrls)) {
-			    src = self.fixUrls(src);
-			}
+			var id = newCallback(queueScript), divId = DIV_PREFIX + id,
+				run, context = { target: '#' + divId, parent: parentContext };
 			
-			callbacks[id] = queueScript;
 			function queueScript() {
 				queue.push(run);
-				delete callbacks[id]; 
 			}
 			
 			if(src) {
+				// fix for the inline script that writes a script tag with encoded 
+				// ampersands hack (more comon than you'd think)
+				src = fixUrls(src);
+								
 				openTag = openTag.replace(SRC_REGEX,'');
 				if(isXDomain(src)) {
 					// will load async via script tag injection (eval()'d on
@@ -456,15 +538,12 @@
 				queue.resume();
 			}
 			function setupResume() {
-				var id = nextId();
-				callbacks[id] = function() {
+				return newCallbackTag(function() {
 					queue.resume();
-					delete callbacks[id];
-				};
-				return TEMPLATE_TAG.replace(/%d/,id);
+				});
 			}
 			function loadAsync() {
-				var ready, scriptText, resume = setupResume();
+				var ready, scriptText;
 				function captureAndResume(script,status) {
 					if(!ready) {
 						// loaded before queue run, cache text
@@ -472,7 +551,7 @@
 						return;
 					}
 					try {
-						captureHtml(script, resume);
+						captureHtml(script, setupResume());
 					} catch(e) {
 						logError(script,e);
 					}
@@ -488,14 +567,15 @@
 				return function() {
 					ready = true;
 					if(scriptText) {
-						captureHtml(scriptText, resume);
+						// already loaded, so don't pause the queue and don't resume!
+						captureHtml(scriptText);
 					} else {
 						queue.pause();	
 					}
 				};
 			}
 			function loadXDomain(cb) {
-				var state = capture();
+				var state = capture(context,options);
 				queue.pause(); // pause the queue while the script loads
 				logDebug('pause',src);
 				$.ajax({
@@ -507,21 +587,21 @@
 				});
 				function captureAndResume(xhr,st,error) {
 					logDebug('out', src, state.out);
-					html(uncapture(state), setupResume());
-					state.finish();
+					html(uncapture(state), 
+						newCallbackTag(state.finish) + setupResume());
 					logDebug('resume',src);
 				}
 			}
 			function captureHtml(script, cb) {
-				var state = captureWrite(script);
-				html(state.out, cb);
-				state.finish();
+				var state = captureWrite(script,context,options);
+				cb = newCallbackTag(state.finish) + (cb || '');
+				html(state.out,cb);
 			}
 			function html(markup,cb) {
-				$.replaceWith('#'+divId,sanitize(markup,null,queue) + (cb || ''));
-			}
-			return openTag + TEMPLATE.replace(/%d/,id) + 
-				'</script><div style="display: none" id="'+divId+'"></div>';
+			 	$.replaceWith(context.target,sanitize(markup,null,queue,context) + (cb || ''));
+			} 
+			return '<div style="display: none" id="'+divId+'"></div>' + openTag +
+				TEMPLATE.replace(/%d/,id) + '</script>';
 		}
 	}
 	
@@ -553,6 +633,68 @@
 		if(done) {
 			queue.push(done);		
 		}
+	}
+	
+	function findLastChild(el) {
+		var n = el;
+		while(n && n.nodeType === 1) {
+			el = n;
+			n = n.lastChild;
+			// last child may not be an element
+			while(n && n.nodeType !== 1) {
+				n = n.previousSibling;
+			}
+		}
+		return el;
+	}
+		
+	/**
+	  * Experimental - automatically captures document.write calls and 
+	  * defers them untill after page load.
+	  * @param {Function} [done] optional callback for when all the 
+	  * captured content has been loaded.
+	  */
+	function autoCapture(done) {
+		var write = doc.write, 
+			writeln = doc.writeln,
+			currentScript,
+			autoQ = [];
+		doc.writeln = function(s) {
+			doc.write(s+'\n');
+		};
+		var state;
+		doc.write = function(s) {
+			var scriptEl = findLastChild(doc.body);
+			if(scriptEl !== currentScript) {
+				currentScript = scriptEl;
+				autoQ.push(state = {
+					el: scriptEl,
+					out: []
+				});					
+			}
+			state.out.push(s);
+		};
+		$.onLoad(function() {			
+			// for each script, append a div immediately after it, 
+			// then replace the div with the sanitized output
+			var el, div, out, safe, doneFn;
+			done = normalizeOptions(done);
+			doneFn = done.done;
+			done.done = function() {
+				doc.write = write;
+				doc.writeln = writeln;
+				if(doneFn) doneFn();				
+			};
+			for(var i = 0, len = autoQ.length; i < len; i++ ) {
+				el = autoQ[i].el;
+				div = doc.createElement('div');
+				el.parentNode.insertBefore( div, el.nextSibling );
+				out = autoQ[i].out.join('');
+				// only the last snippet gets passed the callback
+				safe = len - i === 1 ? sanitize(out,done) : sanitize(out);
+				$.replaceWith(div,safe);
+			}
+		});
 	}
 	
 	var name = 'writeCapture';
@@ -601,8 +743,9 @@
 				}
 			});
 		},
+		autoAsync: autoCapture,
 		sanitize: sanitize,
 		sanitizeSerial: sanitizeSerial
 	};
 	
-})(this.writeCaptureSupport,this,eval);
+})(this.writeCaptureSupport,this);
