@@ -236,7 +236,7 @@ options are used:
     {
     	url: url, // the url to load
     	type: 'GET', // will always be GET
-    	dataType: "script", // will be "script" or undefined
+    	dataType: "script", // will be "script" or "text"
     	async: true/false,
     	success: callback(text), // called on sucess
     	error: callback(xhr,status,error) // called on error
@@ -247,7 +247,7 @@ passed regardless. If dataType === "script", then it is assumed that the
 script will be loaded and executed asynchronously via 
 [script tag injection](http://jaybyjayfresh.com/2007/09/17/using-script-tags-to-do-remote-http-calls-in-javascript/).
 dataType will only be set to "script" if the script being loaded is on another 
-domain.
+domain, otherwise it will be "text" and the response must not be evaluated as a script.
 
 The success callback should be passed the text of the script (if 
 dataType:"script", the text will not be used and can be omitted). The error

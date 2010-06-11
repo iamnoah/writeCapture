@@ -527,6 +527,7 @@
 				$.ajax({
 					url: src,
 					type: 'GET',
+					dataType: 'text',
 					async: false,
 					success: function(html) {
 						captureHtml(html);
@@ -560,6 +561,7 @@
 				$.ajax({
 					url: src,
 					type: 'GET',
+					dataType: 'text',
 					async: true,
 					success: captureAndResume,
 					error: logAjaxError
@@ -737,6 +739,7 @@
 		load: function(selector,url,options) {
 			$.ajax({
 				url: url,
+				dataType: 'text',
 				type: "GET",
 				success: function(content) {
 					self.html(selector,content,options);
