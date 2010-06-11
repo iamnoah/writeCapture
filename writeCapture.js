@@ -1,16 +1,16 @@
 /**
- * writeCapture.js v1.0.0
+ * writeCapture.js v1.0.5-SNAPSHOT
  *
  * @author noah <noah.sloan@gmail.com>
  * 
  */
 (function($,global) {
-    var doc = global.document;
-    function doEvil(code) {
-        var div = doc.createElement('div');
-        doc.body.insertBefore(div,null);
-        $.replaceWith(div,'<script type="text/javascript">'+code+'</script>');
-    }
+	var doc = global.document;
+	function doEvil(code) {
+		var div = doc.createElement('div');
+		doc.body.insertBefore(div,null);
+		$.replaceWith(div,'<script type="text/javascript">'+code+'</script>');
+	}
 	// ensure we have our support functions
 	$ = $ || (function(jQuery) {
 		/**
@@ -44,8 +44,8 @@
 			 * and executed if present.
 			 */
 			replaceWith: function(selector,content) {
-			    // jQuery 1.4? has a bug in replaceWith so we can't use it directly
-			    var el = jQuery(selector)[0];
+				// jQuery 1.4? has a bug in replaceWith so we can't use it directly
+				var el = jQuery(selector)[0];
 				var next = el.nextSibling, parent = el.parentNode;
 
 				jQuery(el).remove();
@@ -108,7 +108,7 @@
 		this._queue = [];
 		this._children = [];
 		this._parent = parent;
-		if(parent) parent._addChild(this)		
+		if(parent) parent._addChild(this);
 	}
 	
 	SubQ.prototype = {
@@ -238,48 +238,61 @@
 		}
 	})();
 	
-	function capture(context) {
-		var tempEls = [];
-		var findEl;
-		var state = {
-			write: doc.write,
-			writeln: doc.writeln,
-			getEl: doc.getElementById,
-			finish: function() {
-				each(tempEls,function(it) {
-					var real = doc.getElementById(it.id);
-					if(!real) {
-						logError('<proxyGetElementById - finish>',
-							'no element in writen markup with id ' + it.id);
-						return;
-					}
+	function unProxy(elements) {
+		each(elements,function(it) {
+			var real = doc.getElementById(it.id);
+			if(!real) {
+				logError('<proxyGetElementById - finish>',
+					'no element in writen markup with id ' + it.id);
+				return;
+			}
 
-					each(it.el.childNodes,function(it) {
-						real.appendChild(it);
-					});
+			each(it.el.childNodes,function(it) {
+				real.appendChild(it);
+			});
 
-					if(real.contentWindow) {
-						// TODO why is the setTimeout necessary?
-						global.setTimeout(function() {
-							it.el.contentWindow.document.
-								copyTo(real.contentWindow.document);
-						},1);
-					}
-					$.copyAttrs(it.el,real);
-				});
-			},
-			out: ''
-		};
+			if(real.contentWindow) {
+				// TODO why is the setTimeout necessary?
+				global.setTimeout(function() {
+					it.el.contentWindow.document.
+						copyTo(real.contentWindow.document);
+				},1);
+			}
+			$.copyAttrs(it.el,real);
+		});
+	}
+	
+	function getOption(name,options) {
+		if(options && options[name] === false) {
+			return false;
+		}
+		return options && options[name] || self[name];
+	}
+	
+	function capture(context,options) {
+		var tempEls = [],
+			proxy = getOption('proxyGetElementById',options),
+			writeOnGet = getOption('writeOnGetElementById',options),	
+			state = {
+				write: doc.write,
+				writeln: doc.writeln,
+				finish: function() {},
+				out: ''
+			};
 		context.state = state;
 		doc.write = replacementWrite;
 		doc.writeln = replacementWriteln;
-		if(self.proxyGetElementById) {
-			findEl = makeTemp;
+		if(proxy || writeOnGet) {
+			state.getEl = doc.getElementById;
 			doc.getElementById = getEl;
-		}
-		if(self.writeOnGetElementById) {
-			findEl = writeThenGet;
-			doc.getElementById = getEl;
+			if(writeOnGet) {
+				findEl = writeThenGet;
+			} else {
+				findEl = makeTemp;
+				state.finish = function() {
+					unProxy(tempEls);
+				};
+			}
 		}
 		function replacementWrite(s) {
 			state.out +=  s;
@@ -313,7 +326,7 @@
 	function uncapture(state) {
 		doc.write = state.write;
 		doc.writeln = state.writeln;
-		if(self.proxyGetElementById || self.writeOnGetElementById) {
+		if(state.getEl) {
 			doc.getElementById = state.getEl;
 		}
 		return state.out;
@@ -333,8 +346,8 @@
 	var logError = isFunction(global.console && console.error) ? 
 			doLog : ignore;
 	
-	function captureWrite(code,context) {
-		var state = capture(context);
+	function captureWrite(code,context,options) {
+		var state = capture(context,options);
 		try {
 			doEvil(clean(code));
 		} catch(e) {
@@ -447,6 +460,11 @@
 		var done = options.done;
 		var doneHtml = '';
 		
+		var fixUrls = getOption('fixUrls',options);
+		if(!isFunction(fixUrls)) {
+			fixUrls = function(src) { return src; };
+		}
+		
 		// if a done callback is passed, append a script to call it
 		if(isFunction(done)) {
 			// no need to proxy the call to done, so we can append this to the 
@@ -472,20 +490,18 @@
 			    return element;
 			}
 			
-			// fix for the inline script that writes a script tag with encoded 
-			// ampersands hack (more comon than you'd think)
-			if(src && isFunction(self.fixUrls)) {
-			    src = self.fixUrls(src);
-			}
-			
 			var id = newCallback(queueScript), divId = DIV_PREFIX + id,
-				context = { target: '#' + divId, parent: parentContext };
-			var run;			
+				run, context = { target: '#' + divId, parent: parentContext };
+			
 			function queueScript() {
 				queue.push(run);
 			}
 			
 			if(src) {
+				// fix for the inline script that writes a script tag with encoded 
+				// ampersands hack (more comon than you'd think)
+				src = fixUrls(src);
+								
 				openTag = openTag.replace(SRC_REGEX,'');
 				if(isXDomain(src)) {
 					// will load async via script tag injection (eval()'d on
@@ -559,7 +575,7 @@
 				};
 			}
 			function loadXDomain(cb) {
-				var state = capture(context);
+				var state = capture(context,options);
 				queue.pause(); // pause the queue while the script loads
 				logDebug('pause',src);
 				$.ajax({
@@ -577,7 +593,7 @@
 				}
 			}
 			function captureHtml(script, cb) {
-				var state = captureWrite(script,context);
+				var state = captureWrite(script,context,options);
 				cb = newCallbackTag(state.finish) + (cb || '');
 				html(state.out,cb);
 			}
@@ -641,11 +657,11 @@
 	function autoCapture(done) {
 		var write = doc.write, 
 			writeln = doc.writeln,
-			currentScript, 
+			currentScript,
 			autoQ = [];
 		doc.writeln = function(s) {
 			doc.write(s+'\n');
-		}
+		};
 		var state;
 		doc.write = function(s) {
 			var scriptEl = findLastChild(doc.body);
@@ -657,7 +673,7 @@
 				});					
 			}
 			state.out.push(s);
-		}
+		};
 		$.onLoad(function() {			
 			// for each script, append a div immediately after it, 
 			// then replace the div with the sanitized output
