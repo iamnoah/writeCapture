@@ -19,19 +19,19 @@
 		equals($('#qux').writeCapture().find('.quxx').
 			html('Foo<script type="text/javascript">document.write("BaZ");</script>').
 			html(),'FooBaZ');
-		equals($('#qux').html(),'<div class="quxx">FooBaZ</div>Qux');
+		equals($('#qux').html(),$('<div/>').html('<div class="quxx">FooBaZ</div>Qux').html());
 	});
 	test('end',function(){
 		$('#qux').html('<div class="quxx"></div>Qux');
 		equals($('#qux').writeCapture().find('.quxx').
 			html('Foo<script type="text/javascript">document.write("BaZ");</script>').
-			end().html(),'<div class="quxx">FooBaZ</div>Qux');
+			end().html(),$('<div/>').html('<div class="quxx">FooBaZ</div>Qux').html());
 	});
 	test('endCapture',function(){
 		$('#qux').html('<div class="quxx"></div>Qux');
 		equals($('#qux').writeCapture().find('.quxx').
 			html('Foo<script type="text/javascript">document.write("BaZ");</script>').
-			end().endCapture().html(),'<div class="quxx">FooBaZ</div>Qux');
+			end().endCapture().html(),$('<div/>').html('<div class="quxx">FooBaZ</div>Qux').html());
 	});	
 
 	module("issues");

@@ -188,11 +188,10 @@
 			'FooHello WorldBaz',true);
 	});
 
-	test("parentNode",function() { // issue #8
-		dwa.writeOnGetElementById = true;
+	test("parentNode",function() { // issue #8		
 		testSanitize(
 			'<script type="text/javascript" src="getParent.js"> </script>',
-			'FooHello WorldBar',true);
+			'FooHello WorldBar',true,{writeOnGetElementById:true});
 		expect(5); // testSanitize runs 3
 		ok($('#abc123').hasClass('parent1'));
 		ok($('#foo').hasClass('parent2'));
@@ -218,7 +217,7 @@
 	test("xhtml",function() {
 		testSanitize(
 			'Foo<script type="text/javascript">document.write(\'<span>Bar<input name="Bar"></span>\');</script>Baz',
-			$('<div/>').append('Foo<span>Bar<input name="Bar"/></span>Baz').html(),true,null,false,true);
+			$('<div/>').html('Foo<span>Bar<input name="Bar"/></span>Baz').html(),true,null,false,true);
 	});
 	
 
