@@ -33,6 +33,16 @@ loads. writeCapture has a special method specifically for this case. Simply call
 
 at some point in the document before the scripts that use `document.write`.
 
+You can also pass a function to be called when all the async writes have 
+finished:
+
+    $.writeCapture.autoAsync(function() {
+    	alert('Ads loaded!'); // don't do this though, it would be annoying
+    });
+
+(Actually you can pass all the options you'd pass to any writeCapture call,
+see below for details).
+
 Note that at this time, `autoAsync` is only supported when jQuery is available.
 However, you can easily add support to you page by defining 
 `writeCaptureSupport.onLoad`. See "Implementing writeCaptureSupport" below.
@@ -127,27 +137,11 @@ executed immediately.
     
 ## Multiple HTML Fragments ##
 
-When you have multiple HTML fragments, it can be important that they are run 
-in order. Any time you have more than one sanitize operations to run, you 
-should use `writeCapture.sanitizeSerial`. If will take care of linking the 
-actions together so that each runs only after the previous sanitize 
-operation has finished:
+writeCapture uses an internal queue to ensure that all scripts are run in the 
+correct order, so you don't need to work about multiple calls interfering with
+each other. e.g.,
 
-    /*
-    	$('body).html() === 
-    	'<div id="foo"> </div><div id="bar"> </div>'
-    */
-    
-    wrapCapture.sanitizeSerial([{
-    	html: html1, action: function(html) { $('#foo').replaceWith(html); }
-    },{	
-    	html: html2, function(html) { $('#bar').replaceWith(html); }
-    }],function() {
-    	/*
-    		$('body).html() === 
-    		'<div>Some HTML with scripts in it.</div><div>Some HTML with a script on another domain.</div>';
-    	*/
-    });
+    writeCapture.sanitize()
 
 ## Convenience Functions ##
 
@@ -251,7 +245,7 @@ domain, otherwise it will be "text" and the response must not be evaluated as a 
 
 The success callback should be passed the text of the script (if 
 dataType:"script", the text will not be used and can be omitted). The error
-callback should be passed 3 parameters, the third being the Error that occured.
+callback should be passed 3 parameters, the third being the Error that occurred.
 The first two parameters are ignored. Either success or error must eventually 
 be called for each call to `ajax`.
 
@@ -297,9 +291,18 @@ Used by `proxyGetElementById` to copy attributes from the proxy div to
 the real element. If not present, the attributes are not copied, which 
 usually wont matter.
 
-# Hacks #
+# Options & Hacks #
 
-Note that all of these hacks can be configured globally and per call. Per call 
+All writeCapture calls accept an second (or only, for `autoAsync`) argument for
+options. e.g.,
+
+    writeCapture.sanitize(html,{autoAsync: true, done:...});
+
+You can also pass just a function, which is equivalent to:
+
+    writeCapture.sanitize(html,{done:yourFunc});
+
+Note that all hacks and options can be configured globally and per call. Per call 
 settings override global settings. e.g.,
 
     writeCapture.proxyGetElementById = true;
@@ -307,13 +310,25 @@ settings override global settings. e.g.,
     writeCapture.sanitize(html);
     // getElementById is NOT proxied
     writeCapture.sanitize(html,{proxyGetElementById: false});
-    // there a many options
+    // there are many options
     writeCapture.sanitize(html,{
         fixUrls: myFixUrlsFn,
         writeOnGetElementById: true,
         done: function() { alert('All done!'); },
         asyncAll: true
     });
+
+## done ##
+
+The done callback as described in the Usage examples above. If done is set
+globally, it will be called after every single script tag. We're not sure how
+that might be useful, but it is an option. Let us know if you find a use for 
+it.
+
+## asyncAll ##
+
+As described in the examples, setting this to true will cause scripts on the 
+same domain to be loaded async, which might help perceived performance.
 
 ## DOM manipulation mixed with `document.write` - proxyGetElementById ##
 
@@ -397,22 +412,22 @@ and is expected to return the real path.
 
 ## 1.0.5 ##
 
-  * Added new Hacks:
+  * Hacks:
   
-    * `proxyGetElementById` will attempt to copy attributes from the proxy 
+    * Updated `proxyGetElementById` will attempt to copy attributes from the proxy 
     when jQuery is present. Should improve compatibility in some cases.
     
     * `writeOnGetElementById` for when proxying isn't enough.
     
-  * New Experimental Fearture: `autoAsync`
+  * New Experimental Feature: `autoAsync`
   
-  * All hacks can noew be set globaly and/or per call.
+  * All options and hacks can now be set globally and/or per call.
   
   * No more eval! Fixes a problem in IE where `var` variables were not visible 
   to other scripts.
 
 ## 1.0 ##
- 
+
   * If it's good enough for [newsweek.com](http://newsweek.com) , it's good 
      enough to be version 1.0.
 
