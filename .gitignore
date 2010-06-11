@@ -1,3 +1,4 @@
 .DS_Store
+.gradle
 writeCapture-*-min.js
 jquery.writeCapture-*-min.js
