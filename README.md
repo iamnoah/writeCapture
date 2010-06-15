@@ -225,8 +225,8 @@ same domain to be loaded async, which might help perceived performance.
 ## DOM manipulation mixed with `document.write` - proxyGetElementById ##
 
 Amazingly enough, some scripts will mix DOM manipulation methods like 
-`element.appendChild` with `document.write`. In situations like these, there
-isn't a lot writeCapture can do, however there is a hack that may help some of
+`element.appendChild` with `document.write`. In situations like these, writeCapture's
+abstraction leaks a but, however there is a hack that may help some of
 your scripts:
 
      writeCapture.proxyGetElementById = true;
@@ -416,7 +416,9 @@ usually wont matter.
     
     * `writeOnGetElementById` for when proxying isn't enough.
     
-  * New Experimental Feature: `autoAsync`
+  * New Experimental Feature: `autoAsync`. Inspired by 
+     [eligrey](http://github.com/eligrey)'s 
+     [async-document-write](http://github.com/eligrey/async-document-write).
   
   * All options and hacks can now be set globally and/or per call.
   
