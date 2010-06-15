@@ -1,8 +1,4 @@
-#  What is writeCapture.js? #
-
-It's been referred to as ["the Jesus Script"][jesus].
-Why? Probably because it will save your site from old, ugly, but still 
-necessary 3rd party scripts that use `document.write`. 
+#  Why should I care about writeCapture.js? #
 
 Sometimes we are forced to use a third party script or markup that we simply 
 cannot change (usually an Ad server). While our websites are sleek and snappy 
@@ -139,11 +135,12 @@ executed immediately.
 
 writeCapture uses an internal queue to ensure that all scripts are run in the 
 correct order, so you don't need to work about multiple calls interfering with
-each other. e.g.,
-
-    writeCapture.sanitize()
+each other
 
 ## Convenience Functions ##
+
+There are 3 convenience functions on the `writeCapture` object in addition to 
+`autoAsync` and `sanitize`. They are `html`, `replaceWith` and `load`.
 
 `writeCapture.html` and `writeCapture.replaceWith` behave similarly to the 
 same functions in jQuery. `html` sanitizes the content and replaces the given 
@@ -185,6 +182,106 @@ Note that all of these functions will work using nolib-support (see below),
 but only id based selectors will be supported. You can also pass the element
 itself. If jQuery is used, any jQuery selector is allowed, but only the 
 first matched element will be affected.
+
+# Options & Hacks #
+
+All writeCapture calls accept a second (or only, for `autoAsync`) argument for
+options. e.g.,
+
+    writeCapture.sanitize(html,{autoAsync: true, done:...});
+
+You can also pass just a function, which is equivalent to:
+
+    writeCapture.sanitize(html,{done:yourFunc});
+
+Note that all hacks and options can be configured globally and per call. Per call 
+settings override global settings. e.g.,
+
+    writeCapture.proxyGetElementById = true;
+    // getElementById is proxied
+    writeCapture.sanitize(html);
+    // getElementById is NOT proxied
+    writeCapture.sanitize(html,{proxyGetElementById: false});
+    // there are many options
+    writeCapture.sanitize(html,{
+        fixUrls: myFixUrlsFn,
+        writeOnGetElementById: true,
+        done: function() { alert('All done!'); },
+        asyncAll: true
+    });
+
+## done ##
+
+The done callback as described in the Usage examples above. If done is set
+globally, it will be called after every single script tag. We're not sure how
+that might be useful, but it is an option. Let us know if you find a use for 
+it.
+
+## asyncAll ##
+
+As described in the examples, setting this to true will cause scripts on the 
+same domain to be loaded async, which might help perceived performance.
+
+## DOM manipulation mixed with `document.write` - proxyGetElementById ##
+
+Amazingly enough, some scripts will mix DOM manipulation methods like 
+`element.appendChild` with `document.write`. In situations like these, there
+isn't a lot writeCapture can do, however there is a hack that may help some of
+your scripts:
+
+     writeCapture.proxyGetElementById = true;
+     // or for the jQuery plugin:
+     jQuery.writeCapture.proxyGetElementById = true;
+     // or per call
+     writeCapture.sanitize(theHtml,{proxyGetElementById:true});
+     $(something).writeCapture().html(theHtml,{proxyGetElementById:true});
+
+Enabling the hack will proxy `document.getElementById` and return a temporary 
+element if no element with that id exists. Once the script's HTML has been 
+written, the contents of the temporary element are appended to the real 
+element.
+
+### writeOnGetElementById ###
+
+For some scripts, the proxy approach will fail. For example, a script that 
+tries to access the parentNode property will fail because the proxy node has 
+no parent. In these extreme cases, `writeOnGetElementById` can help, although 
+it has it's own set of problems and should only be used a last resort. It is enabled 
+and disabled in the same way as `proxyGetElementById`:
+
+    writeCapture.writeOnGetElementById = true;
+
+### Implementation - Mock iframes ###
+
+Some scripts even go so far as to create iframes using DOM manipulation and 
+then write to them using `document.write`. Ironically, these writes are 
+perfectly safe because the new iframe is a clean slate. The problem arises when
+an iframe is written using `document.write` then retrieved by id using 
+`getElementById`. With `proxyGetElementById` enabled, the call will return an 
+element, however it returns a plain div, not an iframe. This is a problem 
+because an iframe has a special property called `contentWindow` with its own
+document. So in addition to creating a proxy div element for missing elements,
+we also have to mock the `contentWindow` property and provide a document for 
+the script to write to. Again, there are surely cases where this approach will
+fail, but it will help in many.
+
+`writeOnGetElementById` does not use mock iframes.
+
+## fixUrls - URLs with encoded ampersands ##
+
+A common hack used for browser compatibility goes something like this:
+
+    <script type="text/javascript"><!--
+       document.write('<scr'+'ipt type="text/javascript" src="http://foo.com/bar?baz=qux&amp;quxx=quxxx> </sc'+'ript>');
+    </script>
+
+You'll notice that the ampersand in the URL is encoded, which will prevent 
+writeCapture from loading the script correctly. To remedy this, all script URLs
+are run through `writeCapture.fixUrls(url)` which replaces encoded ampersands 
+with the real thing. It's possible that this could mess up a perfectly valid 
+URL, so you can replace the fixUrls function with one of your own or set it to
+`null` to prevent the hack all together. The function is passed the script URL
+and is expected to return the real path.
 
 # Dependencies #
 
@@ -290,106 +387,6 @@ nolib-support.js, which does not implement `onLoad`, you can implement it easily
 Used by `proxyGetElementById` to copy attributes from the proxy div to 
 the real element. If not present, the attributes are not copied, which 
 usually wont matter.
-
-# Options & Hacks #
-
-All writeCapture calls accept an second (or only, for `autoAsync`) argument for
-options. e.g.,
-
-    writeCapture.sanitize(html,{autoAsync: true, done:...});
-
-You can also pass just a function, which is equivalent to:
-
-    writeCapture.sanitize(html,{done:yourFunc});
-
-Note that all hacks and options can be configured globally and per call. Per call 
-settings override global settings. e.g.,
-
-    writeCapture.proxyGetElementById = true;
-    // getElementById is proxied
-    writeCapture.sanitize(html);
-    // getElementById is NOT proxied
-    writeCapture.sanitize(html,{proxyGetElementById: false});
-    // there are many options
-    writeCapture.sanitize(html,{
-        fixUrls: myFixUrlsFn,
-        writeOnGetElementById: true,
-        done: function() { alert('All done!'); },
-        asyncAll: true
-    });
-
-## done ##
-
-The done callback as described in the Usage examples above. If done is set
-globally, it will be called after every single script tag. We're not sure how
-that might be useful, but it is an option. Let us know if you find a use for 
-it.
-
-## asyncAll ##
-
-As described in the examples, setting this to true will cause scripts on the 
-same domain to be loaded async, which might help perceived performance.
-
-## DOM manipulation mixed with `document.write` - proxyGetElementById ##
-
-Amazingly enough, some scripts will mix DOM manipulation methods like 
-`element.appendChild` with `document.write`. In situations like these, there
-isn't a lot writeCapture can do, however there is a hack that may help some of
-your scripts:
-
-     writeCapture.proxyGetElementById = true;
-     // or for the jQuery plugin:
-     jQuery.writeCapture.proxyGetElementById = true;
-     // or per call
-     writeCapture.sanitize(theHtml,{proxyGetElementById:true});
-     $(something).writeCapture().html(theHtml,{proxyGetElementById:true});
-
-Enabling the hack will proxy `document.getElementById` and return a temporary 
-element if no element with that id exists. Once the script's HTML has been 
-written, the contents of the temporary element are appended to the real 
-element.
-
-### writeOnGetElementById ###
-
-For some scripts, the proxy approach will fail. For example, a script that 
-tries to access the parentNode property will fail because the proxy node has 
-no parent. In these extreme cases, `writeOnGetElementById` can help, although 
-it has it's own set of problems and should only be used a last resort. It is enabled 
-and disabled in the same way as `proxyGetElementById`:
-
-    writeCapture.writeOnGetElementById = true;
-
-### Implementation - Mock iframes ###
-
-Some scripts even go so far as to create iframes using DOM manipulation and 
-then write to them using `document.write`. Ironically, these writes are 
-perfectly safe because the new iframe is a clean slate. The problem arises when
-an iframe is written using `document.write` then retrieved by id using 
-`getElementById`. With `proxyGetElementById` enabled, the call will return an 
-element, however it returns a plain div, not an iframe. This is a problem 
-because an iframe has a special property called `contentWindow` with its own
-document. So in addition to creating a proxy div element for missing elements,
-we also have to mock the `contentWindow` property and provide a document for 
-the script to write to. Again, there are surely cases where this approach will
-fail, but it will help in many.
-
-`writeOnGetElementById` does not use mock iframes.
-
-## fixUrls - URLs with encoded ampersands ##
-
-A common hack used for browser compatibility goes something like this:
-
-    <script type="text/javascript"><!--
-       document.write('<scr'+'ipt type="text/javascript" src="http://foo.com/bar?baz=qux&amp;quxx=quxxx> </sc'+'ript>');
-    </script>
-
-You'll notice that the ampersand in the URL is encoded, which will prevent 
-writeCapture from loading the script correctly. To remedy this, all script URLs
-are run through `writeCapture.fixUrls(url)` which replaces encoded ampersands 
-with the real thing. It's possible that this could mess up a perfectly valid 
-URL, so you can replace the fixUrls function with one of your own or set it to
-`null` to prevent the hack all together. The function is passed the script URL
-and is expected to return the real path.
 
 # Satisfied Customers
 
