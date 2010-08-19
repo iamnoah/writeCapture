@@ -405,6 +405,41 @@ usually wont matter.
   probably not function properly. This is rare, but if a script is uncouth 
   enough to use document.write, it's a possibility.  
 
+# What to try when writeCapture fails #
+
+Unfortunately, writeCapture wont work 100% of the time. It's simply not 
+feasible to emulate every feature of a loading document. When writeCapture
+simply isn't working, there are some alternatives that may work:
+
+## Write to an iframe. ##
+
+If you create an iframe element and place it where
+you want the content to render, you can do something like this:
+
+    var doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(badHTML);
+    doc.close();
+
+Note that an iframe is not an ideal solution, but it should work as a last 
+resort in most cases.
+
+## Capture `document.write` yourself ##
+
+Again, this is not the most robust solution, but if you only have one script
+to dynamically reload, you may be able to overwrite `document.write` yourself:
+
+    var html = '';
+    document.write = document.writeln = function(s) {
+    	html += s;
+    };
+    
+    // after the script runs
+    $('#whatever').html(html);
+
+Unfortunately, this approach is prone to breaking if the remote script changes
+significantly.
+
 # Version History #
 
 ## 1.0.5 ##
