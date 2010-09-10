@@ -6,7 +6,7 @@ or if you just want to force your ads to load async:
 
     $.writeCapture.autoAsync();
 
-See the [wiki](wiki/Usage) for more detailed usage.
+See the [wiki](/iamnoah/writeCapture/wiki/Usage) for more detailed usage.
 
 # Dependencies #
 
@@ -24,7 +24,7 @@ include nolib-support.js before writeCapture.js.
 Note that nolib does not implement `onLoad`, which is required for `autoAsync`.
 
 If you already have another Ajax library you are using like Prototype or dojo,
-you can [implement write capture support yourself](wiki/WriteCaptureSupport).
+you can [implement write capture support yourself](/iamnoah/writeCapture/wiki/WriteCaptureSupport).
 
 #  Why should I care about writeCapture.js? #
 
