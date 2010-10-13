@@ -1,4 +1,4 @@
-# Usage Summary #
+# Usage Summary #    
 
     $(something).writeCapture().html('some html with document.write scripts');
 
@@ -7,6 +7,18 @@ or if you just want to force your ads to load async:
     $.writeCapture.autoAsync();
 
 See the [wiki](/iamnoah/writeCapture/wiki/Usage) for more detailed usage.
+
+****New!**** [extsrc](http://code.google.com/p/extsrcjs/) support:
+
+	// call from $.ready() or your document ready of choice
+    writeCapture.extsrc(doneCallback);
+
+You can use the same markup (`extsrc="..."`,`asryncsrc="..."`) but with a few
+advantages:
+
+  * All the power of writeCapture.js, so more `document.write` edge cases will work.
+  * No extra span tags!
+  * All scripts with `extsrc` will be run in order, so you don't have to worry about dependencies.
 
 # Dependencies #
 
