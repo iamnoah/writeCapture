@@ -1,5 +1,5 @@
 /**
- * writeCapture.js v1.0.5-SNAPSHOT
+ * writeCapture.js v1.0.5
  *
  * @author noah <noah.sloan@gmail.com>
  * 
@@ -457,7 +457,7 @@
 		// each HTML fragment has it's own queue
 		var queue = parentQ && new Q(parentQ) || GLOBAL_Q;
 		options = normalizeOptions(options);
-		var done = options.done;
+		var done = getOption('done',options);
 		var doneHtml = '';
 		
 		var fixUrls = getOption('fixUrls',options);
@@ -509,10 +509,10 @@
 					run = loadXDomain;
 				} else {
 					// can be loaded then eval()d
-					if(options.asyncAll) {
+					if(getOption('asyncAll',options)) {
 						run = loadAsync();
 					} else {
-						run = loadSync; 
+						run = loadSync;
 					}
 				}
 			} else {
@@ -699,6 +699,37 @@
 		});
 	}
 	
+	function extsrc(cb) {
+		var scripts = document.getElementsByTagName('script'),
+			s,o, html, q, ext, async, doneCount = 0,
+			done = cb ? newCallbackTag(function() {
+				if(++doneCount >= exts.length) {
+					cb();
+				}
+			}) : '',
+			exts = [];
+			
+		for(var i = 0, len = scripts.length; i < len; i++) {
+			s = scripts[i];
+			ext = s.getAttribute('extsrc');
+			async = s.getAttribute('asyncsrc');
+			if(ext || async) {
+				exts.push({ext:ext,async:async});
+			}
+		}
+
+		for(i = 0, len = exts.length; i < len; i++) {
+			o = exts[i];
+			if(o.ext) {
+				html = '<script type="text/javascript" src="'+o.ext+'"> </script>';
+				$.replaceWith(s,sanitize(html) + done);				
+			} else if(o.async) {
+				html = '<script type="text/javascript" src="'+o.async+'"> </script>';
+				$.replaceWith(s,sanitize(html,{asyncAll:true}, new Q()) + done);
+			}
+		}
+	}
+	
 	var name = 'writeCapture';
 	var self = global[name] = {
 		_original: global[name],
@@ -746,6 +777,7 @@
 				}
 			});
 		},
+		extsrc: extsrc,
 		autoAsync: autoCapture,
 		sanitize: sanitize,
 		sanitizeSerial: sanitizeSerial
