@@ -714,7 +714,7 @@
 			ext = s.getAttribute('extsrc');
 			async = s.getAttribute('asyncsrc');
 			if(ext || async) {
-				exts.push({ext:ext,async:async});
+				exts.push({ext:ext,async:async,s:s});
 			}
 		}
 
@@ -722,10 +722,10 @@
 			o = exts[i];
 			if(o.ext) {
 				html = '<script type="text/javascript" src="'+o.ext+'"> </script>';
-				$.replaceWith(s,sanitize(html) + done);				
+				$.replaceWith(o.s,sanitize(html) + done);				
 			} else if(o.async) {
 				html = '<script type="text/javascript" src="'+o.async+'"> </script>';
-				$.replaceWith(s,sanitize(html,{asyncAll:true}, new Q()) + done);
+				$.replaceWith(o.s,sanitize(html,{asyncAll:true}, new Q()) + done);
 			}
 		}
 	}
