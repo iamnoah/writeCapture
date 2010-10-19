@@ -721,11 +721,11 @@
 		for(i = 0, len = exts.length; i < len; i++) {
 			o = exts[i];
 			if(o.ext) {
-				html = '<script type="text/javascript" src="'+o.ext+'"> </script>';
-				$.replaceWith(o.s,sanitize(html) + done);				
+				html = '<script type="text/javascript" src="'+o.ext+'"> </script>' + done;
+				$.replaceWith(o.s,sanitize(html));				
 			} else if(o.async) {
-				html = '<script type="text/javascript" src="'+o.async+'"> </script>';
-				$.replaceWith(o.s,sanitize(html,{asyncAll:true}, new Q()) + done);
+				html = '<script type="text/javascript" src="'+o.async+'"> </script>' + done;
+				$.replaceWith(o.s,sanitize(html,{asyncAll:true}, new Q()));
 			}
 		}
 	}
