@@ -365,7 +365,7 @@
 	}
 	
 	function attrPattern(name) {
-		return new RegExp(name+'=(?:(["\'])([\\s\\S]*?)\\1|([^\\s>]+))','i');
+		return new RegExp('\\s'+name+'=(?:(["\'])([\\s\\S]*?)\\1|([^\\s>]+))','i');
 	}
 	
 	function matchAttr(name) {
