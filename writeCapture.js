@@ -170,7 +170,7 @@
 			try {
 				// just in case there is a bug, always resume 
 				// if paused is less than 1
-				while(this.paused < 1 && this._next());
+				while(this.paused < 1 && this._next()){}
 			} finally {
 				this.running = false;
 			}
