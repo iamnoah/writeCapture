@@ -22,6 +22,29 @@
 		}
 		return false;
 	})();
+	
+	function attrPattern(name) {
+		return new RegExp(name+'=(?:(["\'])([\\s\\S]*?)\\1|([^\\s>]+))','i');
+	}
+	
+	function matchAttr(name) {
+		var regex = attrPattern(name);
+		return function(tag) {
+			var match = regex.exec(tag) || [];
+			return match[2] || match[3];
+		};
+	}
+	
+	var TYPE_ATTR = matchAttr('type'),
+		LANG_ATTR = matchAttr('language');	
+	
+	function isJs(scriptTag) {
+		var type = TYPE_ATTR(scriptTag) || '',
+			lang = LANG_ATTR(scriptTag) || '';
+		return (!type && !lang) || // no type or lang assumes JS
+			type.toLowerCase().indexOf('javascript') !== -1 || 
+			lang.toLowerCase().indexOf('javascript') !== -1
+	}
 
 	function globalEval(data) {
 	if ( data && /\S/.test(data) ) {
@@ -112,9 +135,13 @@
 				parent = el.parentNode || el.ownerDocument,
 				work = document.createElement('div'),
 				scripts = [],
-				clearHTML = content.replace(/<script(?:[\s\S]*?)>([\S\s]*?)<\/script>/g,function(all,code) {
-					scripts.push(code);
-					return "";
+				clearHTML = content.replace(/<script([\s\S]*?)>([\S\s]*?)<\/script>/g,function(all,attrs,code) {
+					if(isJs(attrs)) {
+						scripts.push(code);
+						return "";						
+					} else {
+						return all;
+					}
 				});
 			work.innerHTML = clearHTML;
 			for(i = 0, len = work.childNodes.length; i < len; i++) {
