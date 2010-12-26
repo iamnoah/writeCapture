@@ -11,9 +11,9 @@ See the [wiki](/iamnoah/writeCapture/wiki/Usage) for more detailed usage.
 # NEW! - Control JS Support #
 
 The built in `document.write` support in [Control JS](http://stevesouders.com/controljs/) 
-is not great. It adds extra `span` tags and is not nearly as robust as a full library like `writeCapture`. That's why writeCapture provides a [plugin](/iamnoah/writeCapture/blob/master/cjs.writeCapture.js) to replace Control JS's `document.write` support with writeCapture.js.
+is not great. It adds extra `span` tags and is not nearly as robust as a full library like writeCapture. That's why writeCapture provides a [plugin](/iamnoah/writeCapture/blob/master/cjs.writeCapture.js) to replace Control JS's `document.write` support with writeCapture.js.
 	
-For usage, see the [wiki](/iamnoah/writeCatpture/wiki/ControlJS).
+For usage, see the [wiki](/iamnoah/writeCapture/wiki/ControlJS).
 
 # extsrc Support #
 
