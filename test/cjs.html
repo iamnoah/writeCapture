@@ -1,0 +1,25 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      dir="ltr" id="html">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CJS Plugin Tests</title>
+<!--
+	<script type="text/javascript" src="../support/nolib-support.js"></script>
+    <script src="../writeCapture.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../cjs.writeCapture.js" type="text/javascript" charset="utf-8"></script>
+-->	
+</head>
+<body>
+   
+	<script type="text/cjs">function writeTimes() {}</script>
+	<script type="text/cjs" data-cjssrc="http://stevesouders.com/controljs/examples/docwrite.js?sleep=2&amp;jsdelay=2&amp;t=1293390195"></script>
+<script>(function() {
+	window.writeCapture_cjsSrc = 'http://controljs.googlecode.com/svn-history/trunk/control.js';
+	var script = document.createElement('script');
+	script.src = "../writeCapture-1.0.5-forCjs-min.js";
+	var sib = document.getElementsByTagName('script')[0];
+	sib.parentNode.insertBefore(script, sib);
+})();</script>
+</body>
+</html>

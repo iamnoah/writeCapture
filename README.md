@@ -8,17 +8,28 @@ or if you just want to force your ads to load async:
 
 See the [wiki](/iamnoah/writeCapture/wiki/Usage) for more detailed usage.
 
-****New!**** [extsrc](http://code.google.com/p/extsrcjs/) support:
+# NEW! - Control JS Support #
+
+The built in `document.write` support in [Control JS](http://stevesouders.com/controljs/) 
+is not great. It adds extra `span` tags and is not nearly as robust as a full library like `writeCapture`. That's why writeCapture provides a [plugin](/iamnoah/writeCapture/blob/master/cjs.writeCapture.js) to replace Control JS's `document.write` support with writeCapture.js.
+	
+For usage, see the [wiki](/iamnoah/writeCatpture/wiki/ControlJS).
+
+# extsrc Support #
+
+[extsrc](http://code.google.com/p/extsrcjs/) support:
 
 	// call from $.ready() or your document ready of choice
     writeCapture.extsrc(doneCallback);
 
-You can use the same markup (`extsrc="..."`,`asryncsrc="..."`) but with a few
+You can use the same markup (`extsrc="..."`,`asyncsrc="..."`) but with a few
 advantages:
 
   * All the power of writeCapture.js, so more `document.write` edge cases will work.
   * No extra span tags!
   * All scripts with `extsrc` will be run in order, so you don't have to worry about dependencies.
+
+Note that you *do not* need extsrc.js, we are simply supporting the same syntax in writeCapture.
 
 # Dependencies #
 
@@ -60,6 +71,8 @@ clean HTML, safe for injection into the document.
 # Satisfied Customers
 
  * [newsweek.com](http://newsweek.com) [uses][jesus] writeCapture.js.
+
+ * [8tracks.com](http://8tracks.com) "We were having horrible latency with our ad providers and your plugin saved the day! Very impressive work!"
 
 If you use writeCapture and want some free advertising, let us know!
  

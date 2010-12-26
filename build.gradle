@@ -42,8 +42,17 @@ def doConcatPlugin = {
 	}
 }
 
+def doConcatCjs = {
+	ant.concat(destfile:'cjs-concat.tmp.js') {		
+		fileset(dir:'support',includes:'nolib-support.js')
+		fileset(dir:'.',includes:'writeCapture.js')
+		fileset(dir:'.',includes:'cjs.writeCapture.js')
+	}
+}
+
 task concat << doConcat
 task concatPlugin << doConcatPlugin
+task concatCjs << doConcatCjs
 
 def doMinifyNolib = {
 	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
@@ -52,6 +61,15 @@ def doMinifyNolib = {
 		arg(value:'build-concat.tmp.js')		
 	}
 	ant.delete(file:'build-concat.tmp.js')
+}
+
+def doMinifyCjs = {
+	ant.java(jar:'build/yuicompressor-2.4.2.jar',fork:true) {
+		arg(value:'-o')
+		arg(value:"writeCapture-${getVersion()}-forCjs-min.js")
+		arg(value:'cjs-concat.tmp.js')		
+	}
+	ant.delete(file:'cjs-concat.tmp.js')
 }
 
 def doMinifyPlugin = {
@@ -67,6 +85,8 @@ task minifyNolib(dependsOn:'concat') << doMinifyNolib
 
 task minifyPlugin(dependsOn:'concatPlugin') << doMinifyPlugin
 
+task minifyCjs(dependsOn:'concatCjs') << doMinifyCjs
+
 task minify << doMinify
 
 task release(dependsOn:['upVersion']) << {
@@ -75,7 +95,9 @@ task release(dependsOn:['upVersion']) << {
 	doConcat()
 	doMinifyNolib()
 	doConcatPlugin()
-	doMinifyPlugin()	
+	doMinifyPlugin()
+	doConcatCjs()
+	doMinifyCjs()		
 	def version = getVersion()
 	println "Releasing v${version}"
 	println "You should:"	
