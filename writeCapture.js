@@ -377,6 +377,7 @@
 	}
 	
 	var SCRIPT_TAGS = /(<script[\s\S]*?>)([\s\S]*?)<\/script>/ig, 
+		SCRIPT_2 = /<script[\s\S]*?\/>/ig,
 		SRC_REGEX = attrPattern('src'),
 		SRC_ATTR = matchAttr('src'),
 		TYPE_ATTR = matchAttr('type'),
@@ -475,7 +476,11 @@
 		}
 		// for each tag, generate a function to load and eval the code and queue
 		// themselves
-		return html.replace(SCRIPT_TAGS,proxyTag) + doneHtml;
+		return html.replace(SCRIPT_TAGS,proxyTag).replace(SCRIPT_2,proxyBodyless) + doneHtml;
+		function proxyBodyless(tag) {
+			// hack in a bodyless tag...
+			return proxyTag(tag,tag.substring(0,tag.length-2)+'>','');
+		}
 		function proxyTag(element,openTag,code) {
 			var src = SRC_ATTR(openTag),
 				type = TYPE_ATTR(openTag) || '',
@@ -599,8 +604,18 @@
 				cb = newCallbackTag(state.finish) + (cb || '');
 				html(state.out,cb);
 			}
+			function safeOpts(options) {
+				var copy = {};
+				for(var i in options) {
+					if(options.hasOwnProperty(i)) {
+						copy[i] = options[i];
+					}
+				}
+				delete copy.done;
+				return copy;
+			}
 			function html(markup,cb) {
-			 	$.replaceWith(context.target,sanitize(markup,null,queue,context) + (cb || ''));
+			 	$.replaceWith(context.target,sanitize(markup,safeOpts(options),queue,context) + (cb || ''));
 			} 
 			return '<div style="display: none" id="'+divId+'"></div>' + openTag +
 				TEMPLATE.replace(/%d/,id) + '</script>';

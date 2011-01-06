@@ -12,6 +12,21 @@
 		$('#foo').writeCapture('replaceWith','<div id="foo">Foo<script type="text/javascript">document.write("BaZ");</script></div>');
 		equals($('#foo').html(),'FooBaZ');		
 	});
+				
+	module("options");
+	test("writeOnGetElementById",function() {
+		expect(1);
+		$.writeCapture.writeOnGetElementById = false;
+		$.writeCapture.proxyGetElementById = false;
+		$('#foo').writeCapture().replaceWith('<script src="http://noah/code/writeCapture/test/getOpts.js"></script>',{
+			writeOnGetElementById: true,
+			done: function() {
+				start();
+				equals($('#foo').html(),'FooBaZ');
+			}
+		});
+		stop();
+	});	
 	
 	module("proxying");
 	test('find',function(){

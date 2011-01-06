@@ -1,0 +1,1 @@
+document.write('<script src="http://noah/code/writeCapture/test/options.js" />')
