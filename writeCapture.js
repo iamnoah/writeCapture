@@ -274,26 +274,29 @@
 			proxy = getOption('proxyGetElementById',options),
 			writeOnGet = getOption('writeOnGetElementById',options),	
 			state = {
-				write: doc.write,
-				writeln: doc.writeln,
-				finish: function() {},
+				_doc: {
+					write: doc.write,
+					writeln: doc.writeln,
+				},
+				finish: function() {},				
 				out: ''
 			};
 		context.state = state;
 		doc.write = replacementWrite;
 		doc.writeln = replacementWriteln;
 		if(proxy || writeOnGet) {
-			state.getEl = doc.getElementById;
+			state._doc.getElementById = doc.getElementById;
 			doc.getElementById = getEl;
 			if(writeOnGet) {
 				findEl = writeThenGet;
+				writeFirst(doc,'getElementsByTagName');
 			} else {
 				findEl = makeTemp;
 				state.finish = function() {
 					unProxy(tempEls);
 				};
 			}
-		}
+		}		
 		function replacementWrite(s) {
 			state.out +=  s;
 		}
@@ -307,12 +310,22 @@
 			t.contentWindow = { document: new MockDocument() };
 			return t;
 		}
-		function writeThenGet(id) {
+		function writeFirst(doc,fnName) {
+			var orig = state._doc[fnName] = doc[fnName];
+			doc[fnName] = function(arg) {
+				writeState();
+				return canCall ? orig.call(doc,arg) : orig(arg);
+			};
+		}
+		function writeState() {
 			var target = $.$(context.target);
 			var div = doc.createElement('div');
 			target.parentNode.insertBefore(div,target);
 			$.replaceWith(div,state.out);
-			state.out = '';
+			state.out = '';			
+		}
+		function writeThenGet(id) {
+			writeState();
 			return canCall ? state.getEl.call(doc,id) : 
 				state.getEl(id);
 		}
@@ -324,10 +337,11 @@
 		return state;
 	}
 	function uncapture(state) {
-		doc.write = state.write;
-		doc.writeln = state.writeln;
-		if(state.getEl) {
-			doc.getElementById = state.getEl;
+		var d = state._doc;
+		for(var i in d) {
+			if(d.hasOwnProperty(i)) {
+				doc[i] = d[i];
+			}
 		}
 		return state.out;
 	}
