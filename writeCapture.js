@@ -375,9 +375,9 @@
 			return match[2] || match[3];
 		};
 	}
-	
-	var SCRIPT_TAGS = /(<script[\s\S]*?>)([\s\S]*?)<\/script>/ig, 
-		SCRIPT_2 = /<script[\s\S]*?\/>/ig,
+
+	var SCRIPT_TAGS = /(<script[^>]*>)([\s\S]*?)<\/script>/ig, 
+		SCRIPT_2 = /<script[^>]*\/>/ig,
 		SRC_REGEX = attrPattern('src'),
 		SRC_ATTR = matchAttr('src'),
 		TYPE_ATTR = matchAttr('type'),
