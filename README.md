@@ -6,7 +6,7 @@ or if you just want to force your ads to load async:
 
     $.writeCapture.autoAsync();
 
-See the [wiki](/iamnoah/writeCapture/wiki/Usage) for more detailed usage.
+writeCapture can be used [with][plugin] or [without][nolib] jQuery and can be loaded asynchronously. For async loading, [[ControlJS]]  is a good option, but any async loading library or technique should work. See the [wiki](/iamnoah/writeCapture/wiki/Usage) for more detailed usage.
 
 # NEW! - Control JS Support #
 
@@ -197,3 +197,6 @@ If you use writeCapture and want some free advertising, let us know!
 [adsense]: https://code.google.com/apis/analytics/docs/tracking/asyncUsageGuide.html
 
 [jesus]: http://iamnoah.blogspot.com/2009/12/github-taming-documentwrite-and-nodejs.html?showComment=1275069903219#c7207630670857732321 "It will save your site from hacks."
+
+[nolib]: https://github.com/iamnoah/writeCapture/blob/master/support/nolib-support.js
+[plugin]: https://github.com/iamnoah/writeCapture/tree/master/plugin
