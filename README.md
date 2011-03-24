@@ -78,6 +78,10 @@ If you use writeCapture and want some free advertising, let us know!
  
 # Caveats/Limitations #
  
+* AdSense - AdSense code using `document.write` will not work. However AdSense provides
+  [asynchronous tracking support][adsense], so you don't even need writeCapture to load 
+  AdSense asynchronously.
+
 * If any of the included scripts are on another domain, they will have to be 
   loaded asynchronously via script tag injection. Subsequent scripts in the 
   HTML will be blocked, so order will be preserved, but this means that not 
@@ -189,5 +193,7 @@ If you use writeCapture and want some free advertising, let us know!
 
    * first release. Any content but a single script tag would result in 
    partially async execution thanks to an overuse of defer.
+
+[adsense]: https://code.google.com/apis/analytics/docs/tracking/asyncUsageGuide.html
 
 [jesus]: http://iamnoah.blogspot.com/2009/12/github-taming-documentwrite-and-nodejs.html?showComment=1275069903219#c7207630670857732321 "It will save your site from hacks."
