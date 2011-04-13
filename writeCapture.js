@@ -748,6 +748,7 @@
 	var name = 'writeCapture';
 	var self = global[name] = {
 		_original: global[name],
+		support: $,
 		/**
 		 */
 		fixUrls: function(src) {
