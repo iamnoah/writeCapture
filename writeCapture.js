@@ -272,7 +272,8 @@
 	function capture(context,options) {
 		var tempEls = [],
 			proxy = getOption('proxyGetElementById',options),
-			writeOnGet = getOption('writeOnGetElementById',options),	
+			writeOnGet = getOption('writeOnGetElementById',options),
+			immediate = getOption('immediateWrites', options),
 			state = {
 				write: doc.write,
 				writeln: doc.writeln,
@@ -280,8 +281,8 @@
 				out: ''
 			};
 		context.state = state;
-		doc.write = replacementWrite;
-		doc.writeln = replacementWriteln;
+		doc.write = immediate ? immediateWrite : replacementWrite;
+		doc.writeln = immediate ? immediateWriteln : replacementWriteln;
 		if(proxy || writeOnGet) {
 			state.getEl = doc.getElementById;
 			doc.getElementById = getEl;
@@ -299,6 +300,14 @@
 		}
 		function replacementWriteln(s) {
 			state.out +=  s + '\n';
+		}
+		function immediateWrite(s) {
+			var target = $.$(context.target);
+			target.parentNode.innerHTML += s;
+		}
+		function immediateWriteln(s) {
+			var target = $.$(context.target);
+			target.parentNode.innerHTML += s + '\n';
 		}
 		function makeTemp(id) {
 			var t = doc.createElement('div');
