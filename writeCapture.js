@@ -320,11 +320,15 @@
 		}
 		function immediateWrite(s) {
 			var target = $.$(context.target);
-			target.parentNode.innerHTML += s;
+			var div = doc.createElement('div');
+			target.parentNode.insertBefore(div,target);
+			$.replaceWith(div,sanitize(s));
 		}
 		function immediateWriteln(s) {
 			var target = $.$(context.target);
-			target.parentNode.innerHTML += s + '\n';
+			var div = doc.createElement('div');
+			target.parentNode.insertBefore(div,target);
+			$.replaceWith(div,sanitize(s) + '\n');
 		}
 		function makeTemp(id) {
 			var t = doc.createElement('div');
