@@ -272,6 +272,7 @@
 	function capture(context,options) {
 		var tempEls = [],
 			proxy = getOption('proxyGetElementById',options),
+			forceLast = getOption('forceLastScriptTag',options),
 			writeOnGet = getOption('writeOnGetElementById',options),
 			immediate = getOption('immediateWrites', options),
 			state = {
@@ -294,6 +295,22 @@
 					unProxy(tempEls);
 				};
 			}
+		}
+		if(forceLast) {
+			state.getByTag = doc.getElementsByTagName;
+			doc.getElementsByTagName = function(name) {
+				var result = slice(canCall ? state.getByTag.call(doc,name) :
+					state.getByTag(name));				
+				if(name === 'script') {
+					result.push( $.$(context.target) );
+				}
+				return result;
+			};
+			var f = state.finish;
+			state.finish = function() {
+				f();
+				doc.getElementsByTagName = state.getByTag;
+			};
 		}
 		function replacementWrite(s) {
 			state.out +=  s;
