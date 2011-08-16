@@ -615,13 +615,9 @@
 				var state = capture(context,options);
 				queue.pause(); // pause the queue while the script loads
 				logDebug('pause',src);
-				$.ajax({
-					url: src,
-					type: 'GET',
-					dataType: "script",
-					success: captureAndResume,
-					error: logAjaxError
-				});
+				
+				doLoadXDomain(context.target,src,captureAndResume);		
+
 				function captureAndResume(xhr,st,error) {
 					logDebug('out', src, state.out);
 					html(uncapture(state), 
@@ -651,6 +647,29 @@
 				TEMPLATE.replace(/%d/,id) + '</script>';
 		}
 	}
+    
+    function doXDomainLoad(target,url,success) {
+    	// TODO what about scripts that fail to load? bad url, etc.?
+		var script = document.createElement("script");
+		script.src = url;
+
+		var done = false;
+
+		// Attach handlers for all browsers
+		script.onload = script.onreadystatechange = function(){
+			if ( !done && (!this.readyState ||
+					this.readyState == "loaded" || this.readyState == "complete") ) {
+				done = true;
+				success();
+
+				// Handle memory leak in IE
+				script.onload = script.onreadystatechange = null;
+				parent.removeChild( script );
+			}
+		};		
+		
+		parent.insertBefore(script,target);        
+    }	
 	
 	/**
 	 * Sanitizes all the given fragments and calls action with the HTML.
