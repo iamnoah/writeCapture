@@ -616,7 +616,7 @@
 				queue.pause(); // pause the queue while the script loads
 				logDebug('pause',src);
 				
-				doLoadXDomain(context.target,src,captureAndResume);		
+				doXDomainLoad(context.target,src,captureAndResume);		
 
 				function captureAndResume(xhr,st,error) {
 					logDebug('out', src, state.out);
@@ -653,7 +653,7 @@
 		var script = document.createElement("script");
 		script.src = url;
 
-		var done = false;
+		var done = false, parent = target.parentNode;
 
 		// Attach handlers for all browsers
 		script.onload = script.onreadystatechange = function(){
