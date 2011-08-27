@@ -70,7 +70,7 @@ clean HTML, safe for injection into the document.
 
 # Satisfied Customers
 
- * [newsweek.com](http://newsweek.com) [uses][jesus] writeCapture.js.
+ * [TheDailyBeast.com](http://TheDailyBeast.com) [uses][jesus] writeCapture.js.
 
  * [8tracks.com](http://8tracks.com) "We were having horrible latency with our ad providers and your plugin saved the day! Very impressive work!"
 
