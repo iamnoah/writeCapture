@@ -653,6 +653,8 @@
 		var script = document.createElement("script");
 		script.src = url;
 
+		target = $.$(target);
+
 		var done = false, parent = target.parentNode;
 
 		// Attach handlers for all browsers

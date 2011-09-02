@@ -135,7 +135,7 @@
 				parent = el.parentNode || el.ownerDocument,
 				work = document.createElement('div'),
 				scripts = [],
-				clearHTML = content.replace(/<script([\s\S]*?)>([\S\s]*?)<\/script>/g,function(all,attrs,code) {
+				clearHTML = content.replace(/<script([\s\S]*?)>([\S\s]*?)<\/script>/gi,function(all,attrs,code) {
 					if(isJs(attrs)) {
 						scripts.push(code);
 						return "";						
