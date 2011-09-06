@@ -144,8 +144,8 @@
 					}
 				});
 			work.innerHTML = clearHTML;
-			for(i = 0, len = work.childNodes.length; i < len; i++) {
-				parent.insertBefore(work.childNodes.item(i).cloneNode(true),el);
+			while (work.firstChild) {
+				parent.insertBefore(work.removeChild(work.firstChild));
 			}
 			parent.removeChild(el);
 			for(i = 0, len = scripts.length; i < len; i++) {
