@@ -6,9 +6,10 @@
  */
 (function($,global) {
 	var doc = global.document;
-	function doEvil(code) {
-		var div = doc.createElement('div');
-		doc.body.insertBefore(div,null);
+	function doEvil(code,target) {
+		var div = doc.createElement('div'),
+			parent = target && target.parentNode || doc.body;
+		parent.insertBefore(div,target);
 		$.replaceWith(div,'<script type="text/javascript">'+code+'</script>');
 	}
 	// ensure we have our support functions
@@ -379,7 +380,7 @@
 	function captureWrite(code,context,options) {
 		var state = capture(context,options);
 		try {
-			doEvil(clean(code));
+			doEvil(clean(code),$.$(context.target));
 		} catch(e) {
 			logError(code,e);
 		} finally {
