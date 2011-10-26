@@ -145,7 +145,7 @@
 				});
 			work.innerHTML = clearHTML;
 			while (work.firstChild) {
-				parent.insertBefore(work.removeChild(work.firstChild),null);
+				parent.insertBefore(work.removeChild(work.firstChild),el);
 			}
 			parent.removeChild(el);
 			for(i = 0, len = scripts.length; i < len; i++) {
