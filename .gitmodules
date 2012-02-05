@@ -1,0 +1,3 @@
+[submodule "lib/element.write"]
+	path = lib/element.write
+	url = git@github.com:iamnoah/element.write.git
