@@ -1,4 +1,6 @@
-# Usage Summary #    
+NEW! Checkout [this branch](https://github.com/iamnoah/writeCapture/tree/writeCapture2) for a completely rewritten writeCapture that should be much more compatible with a greater variety of scripts.
+
+# Usage Summary #
 
     $(something).writeCapture().html('some html with document.write scripts');
 
@@ -9,29 +11,6 @@ or if you just want to force your ads to load async:
 writeCapture can be used [with][plugin] or [without][nolib] jQuery and can be loaded asynchronously. For async loading, [[ControlJS]]  is a good option, but any async loading library or technique should work. See the [wiki](/iamnoah/writeCapture/wiki/Usage) for more detailed usage.
 
 ***Need help? See "Help!" below.***
-
-# NEW! - Control JS Support #
-
-The built in `document.write` support in [Control JS](http://stevesouders.com/controljs/) 
-is not great. It adds extra `span` tags and is not nearly as robust as a full library like writeCapture. That's why writeCapture provides a [plugin](/iamnoah/writeCapture/blob/master/cjs.writeCapture.js) to replace Control JS's `document.write` support with writeCapture.js.
-	
-For usage, see the [wiki](/iamnoah/writeCapture/wiki/ControlJS).
-
-# extsrc Support #
-
-[extsrc](http://code.google.com/p/extsrcjs/) support:
-
-	// call from $.ready() or your document ready of choice
-    writeCapture.extsrc(doneCallback);
-
-You can use the same markup (`extsrc="..."`,`asyncsrc="..."`) but with a few
-advantages:
-
-  * All the power of writeCapture.js, so more `document.write` edge cases will work.
-  * No extra span tags!
-  * All scripts with `extsrc` will be run in order, so you don't have to worry about dependencies.
-
-Note that you *do not* need extsrc.js, we are simply supporting the same syntax in writeCapture.
 
 # Dependencies #
 
@@ -85,11 +64,11 @@ are a lot of workarounds to try before giving up.
 
 Next, ask your question on the [mailing list](http://groups.google.com/group/writecapturejs-users). Please
 ask your question [the smart way](http://catb.org/~esr/faqs/smart-questions.html#before). That includes creating
-a stripped down example at http://jsfiddle.net/ so that everyone can play with it. A private page on your site 
+a stripped down and *working* example at http://jsfiddle.net/ so that everyone can play with it. A private page on your site 
 demonstrating the problem is rarely helpful because we can't go and edit the source. Please take the time to 
 reproduce it on JS fiddle so we can help you. 
 
-Please do not email the author privately or open an issue in the issue tracker. The author does not actively
+Please **do not** email the author privately or open an issue in the issue tracker. The author does not actively
 use write capture, so he probably does not have any idea what is causing your problem.
 
 You may think that it is quicker to go straight to the mailing list or the author without taking the time to
@@ -112,6 +91,30 @@ who can help you has already done all of those things. Please respect our time, 
 * Scripts that assume that they are the last element in the document will 
   probably not function properly. This is rare, but if a script is uncouth 
   enough to use document.write, it's a possibility.  
+
+# Control JS Support #
+
+The built in `document.write` support in [Control JS](http://stevesouders.com/controljs/) 
+is not great. It adds extra `span` tags and is not nearly as robust as a full library like writeCapture. That's why writeCapture provides a [plugin](/iamnoah/writeCapture/blob/master/cjs.writeCapture.js) to replace Control JS's `document.write` support with writeCapture.js.
+  
+For usage, see the [wiki](/iamnoah/writeCapture/wiki/ControlJS).
+
+# extsrc Support #
+
+[extsrc](http://code.google.com/p/extsrcjs/) support:
+
+  // call from $.ready() or your document ready of choice
+    writeCapture.extsrc(doneCallback);
+
+You can use the same markup (`extsrc="..."`,`asyncsrc="..."`) but with a few
+advantages:
+
+  * All the power of writeCapture.js, so more `document.write` edge cases will work.
+  * No extra span tags!
+  * All scripts with `extsrc` will be run in order, so you don't have to worry about dependencies.
+
+Note that you *do not* need extsrc.js, we are simply supporting the same syntax in writeCapture.
+
 
 # Version History #
 
