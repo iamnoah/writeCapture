@@ -70,7 +70,7 @@ require(['jquery','../writeCapture2','qunit/qunit'],function($,wc) {
 	});
 
 	test("var to global",function() {
-    	testSanitize( '<script>var hello = "Hello World";</script><script>document.write("Foo");document.write(hello);document.write("Bar");</script>', 'FooHello WorldBar', true);
+		testSanitize( '<script>var hello = "Hello World";</script><script>document.write("Foo");document.write(hello);document.write("Bar");</script>', 'FooHello WorldBar', true);
 	});
 
 	test("xdomain getElementById",function() { // issue #5
@@ -158,5 +158,14 @@ require(['jquery','../writeCapture2','qunit/qunit'],function($,wc) {
 
 	test('incomplete HTML inside a written script',function() {
 		// TODO what if the writer needs text from a subwriter? is that possible?
+	});
+
+	test('comment in a script tag',function() {
+		expect(1);
+		stop();
+		$('#foo').empty().write('<script><!--//<![CDATA[\n\ndocument.write("<scrip"+"t type=\\"text/javascript\\" src=\\"baz.js\\"> </scr"+"ipt>");\n//]]>--></script>',function() {
+			equals(trim($('#foo').find('script').remove().end().text()),'bArFoobAr');
+			start();
+		});
 	});
 });
