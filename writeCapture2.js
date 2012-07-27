@@ -160,7 +160,7 @@
 		}
 
 		if(cb && el.src) {
-			el.onload = script.onreadystatechange = function( _, isAbort ) {
+			el.onload = el.onreadystatechange = function( _, isAbort ) {
 
 				if ( isAbort || !el.readyState || /loaded|complete/.test( el.readyState ) ) {
 
