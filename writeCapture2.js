@@ -48,7 +48,15 @@
 	 * at the end.
 	 */
 	function writerFor(element,onDone) {
-		var writer, capturing, script;
+		var writer, capturing, script,
+			// XXX some stupid scripts will write noscript tags, which <IE9 doesn't like
+			// so we have to ignore them
+			noscript,
+			// XXX a written iframe may have whitespace in it, which we have to ignore
+			// since we can't actually access the inside of an iframe via the DOM
+			// writing to iframes is done through its own document.write, which is not
+			// captured
+			iframe;
 
 		onDone = onDone || function() {};
 
@@ -63,8 +71,20 @@
 					capturing = attrs || {};
 					return false;
 				}
+				if(tag.toLowerCase() === 'noscript') {
+					noscript = true;
+					return false;
+				}
+				if(tag.toLowerCase() === 'iframe') {
+					iframe = true;
+				}
 			},
 			chars: function(text,state) {
+				// XXX ignore noscript tags since they have no effect
+				if(noscript) return false;
+				// XXX we can't write characters inside an iframe, so ignore them (probably just whitespace)
+				if(iframe) return false;
+
 				if(capturing) {
 					console.log('WC element:',element,'chars:',text,this.id);
 					script += text;
@@ -72,6 +92,16 @@
 				}
 			},
 			end: function(tag,state) {
+				// if we're inside a noscript tag, ignore everything until we
+				// hit a closing noscript tag
+				if(noscript) {
+					noscript = tag.toLowerCase() !== 'noscript';
+					return false;
+				}
+				// clear the iframe flag once we're out of it
+				if(iframe) {
+					iframe = tag.toLowerCase() !== 'iframe';
+				}
 				if(capturing) {
 					var attrs = capturing;
 					capturing = false;
