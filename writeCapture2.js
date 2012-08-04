@@ -64,6 +64,9 @@
 		// capture document.write
 		writer = elementWrite.toElement(element,pausable({
 			start: function(tag,attrs,unary,state) {
+				// XXX ignore noscript content since it should not load
+				if(noscript) return false;
+
 				if(tag.toLowerCase() === 'script') {
 					console.log('WC element:',element,
 						'start script. attrs:',attrs,this.id);
