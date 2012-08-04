@@ -326,6 +326,32 @@
 		return new F;
 	}
 
+	var queue = [], writing;
+	function nextWrite() {
+		if(!writing) {
+			var w = queue.shift();
+			if(typeof w.el === 'function') {
+				w.el();
+				return;
+			}
+			writing = true;
+			writerFor(w.el,function() {
+				writing = false;
+				nextWrite();
+			}).close(w.html);
+		}
+	}
+	/**
+	 * Simplified API. Just call this function with the target element
+	 * and the HTML as many times as you like. It will ensure that writes
+	 * don't overlap.
+	 *
+	 * Pass a function and it will be called after the previous writes finish.
+	 */
+	writerFor.write = function(el,html) {
+		queue.push({el:el,html:html});
+		nextWrite();
+	};
 
 	// export writerFor
 	define(['element.write'],function(elWrite) {
