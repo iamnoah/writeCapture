@@ -1,12 +1,29 @@
 # Usage Summary #
 
-writeCapture2 has the same semantics as document.write, but targets an element instead of a document or iframe:
+## Simple
+
+writeCapture2 offers a simple API:
+
+    writeCapture.write(document.getElementById('foo'),'<script>...');
+    writeCapture.write(document.getElementById('bar'),'<script src="anotherScript.js">...');
+    writeCapture.write(document.getElementById('foo'),'<p>etc.</p>');
+    writeCapture.write(function() {
+    	alert('all document.writes are done!');
+    });
+
+`writeCapture.write` will ensure everything is run in order. Passing a function will call that functions when all the previous writes have finished and before any writes that follow it.
+
+## Advanced
+
+The advanced API has the same semantics as document.write, but targets an element instead of a document or iframe:
 
     writeCapture(element,doneCallback).write('some html with document.write scripts').close();
 
 Remember to call close.
 
 Note that it accepts a single, unwrapped DOM element. If you have a jQuery object, you'll need to unwrap it before passing it to writeCapture.
+
+The advanced API will happily let you run multiple scripts at a time which can cause problens. Unless you need to write partial HTML fragments, you should always use the simple API.
 
 # Dependencies #
 
