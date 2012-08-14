@@ -174,9 +174,10 @@
 		var doc = getDoc(parent),
 			el = doc.createElement('script'),
 			name, value;
-		for ( var attr in attrs ) {
-			name = attrs[attr].name;
-			value = attrs[attr].value;
+		for ( i = 0; i < attrs.length; i++ ) {
+			var attr = attrs[i];
+			name = attr.name;
+			value = attr.value;
 
 			if(writerFor.fixUrls && name === 'src') {
 				value = writerFor.fixUrls(value);
