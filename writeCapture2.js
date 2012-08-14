@@ -334,7 +334,10 @@
 	function nextWrite() {
 		if(!writing) {
 			var w = queue.shift();
-			if(typeof w.el === 'function') {
+			// End Of Queue
+			if(typeof w === 'undefined' ) {
+				return;
+			} else if(typeof w.el === 'function') {
 				w.el();
 				return;
 			}
