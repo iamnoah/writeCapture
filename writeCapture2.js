@@ -174,7 +174,7 @@
 		var doc = getDoc(parent),
 			el = doc.createElement('script'),
 			name, value;
-		for ( i = 0; i < attrs.length; i++ ) {
+		for ( var i = 0; i < attrs.length; i++ ) {
 			var attr = attrs[i];
 			name = attr.name;
 			value = attr.value;
