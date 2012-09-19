@@ -23,7 +23,7 @@ Remember to call close.
 
 Note that it accepts a single, unwrapped DOM element. If you have a jQuery object, you'll need to unwrap it before passing it to writeCapture.
 
-The advanced API will happily let you run multiple scripts at a time which can cause problens. Unless you need to write partial HTML fragments, you should always use the simple API.
+The advanced API will happily let you run multiple scripts at a time which can cause problems. Unless you need to write partial HTML fragments, you should always use the simple API.
 
 # Dependencies #
 

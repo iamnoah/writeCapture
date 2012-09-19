@@ -174,9 +174,10 @@
 		var doc = getDoc(parent),
 			el = doc.createElement('script'),
 			name, value;
-		for ( var attr in attrs ) {
-			name = attrs[attr].name;
-			value = attrs[attr].value;
+		for ( var i = 0; i < attrs.length; i++ ) {
+			var attr = attrs[i];
+			name = attr.name;
+			value = attr.value;
 
 			if(writerFor.fixUrls && name === 'src') {
 				value = writerFor.fixUrls(value);
@@ -333,7 +334,10 @@
 	function nextWrite() {
 		if(!writing) {
 			var w = queue.shift();
-			if(typeof w.el === 'function') {
+			// End Of Queue
+			if(typeof w === 'undefined' ) {
+				return;
+			} else if(typeof w.el === 'function') {
 				w.el();
 				return;
 			}
