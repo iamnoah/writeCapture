@@ -73,11 +73,11 @@ require(['jquery','../writeCapture2','qunit/qunit'],function($,wc) {
 		testSanitize( '<script>var hello = "Hello World";</script><script>document.write("Foo");document.write(hello);document.write("Bar");</script>', 'FooHello WorldBar', true);
 	});
 
-	test("xdomain getElementById",function() { // issue #5
-		testSanitize(
-			'Foo<script type="text/javascript" src="http://noahsloan.com/getById.js"> </script>Baz',
-			'FooHello WorldBaz',false);
-	});
+	// test("xdomain getElementById",function() { // issue #5
+	// 	testSanitize(
+	// 		'Foo<script type="text/javascript" src="http://noahsloan.com/getById.js"> </script>Baz',
+	// 		'FooHello WorldBaz',false);
+	// });
 
 	test("writeln",function() {
 		testSanitize(
@@ -98,28 +98,28 @@ require(['jquery','../writeCapture2','qunit/qunit'],function($,wc) {
 			"FooBarBaz",false);
 	});
 
-	test("xdomain", function() {
-		testSanitize('Foo<script type="text/javascript" src="http://noahsloan.com/bar.js"> </script>Baz',
-			"Fooexternal barBaz");
-	});
+	// test("xdomain", function() {
+	// 	testSanitize('Foo<script type="text/javascript" src="http://noahsloan.com/bar.js"> </script>Baz',
+	// 		"Fooexternal barBaz");
+	// });
 
 
-	test("xdomain - encoded ampersand", function() {
-		testSanitize('Foo<script type="text/javascript"><!--\ndocument.write(\'<scri\'+\'pt type="text/javascript" src="http://noahsloan.com/writeCapture?blah&amp;foo=bar"> </s\'+\'cript>\');</script>Baz',
-			"Fooexternal barBaz");
-	});
+	// test("xdomain - encoded ampersand", function() {
+	// 	testSanitize('Foo<script type="text/javascript"><!--\ndocument.write(\'<scri\'+\'pt type="text/javascript" src="http://noahsloan.com/writeCapture?blah&amp;foo=bar"> </s\'+\'cript>\');</script>Baz',
+	// 		"Fooexternal barBaz");
+	// });
 
-	test("all", function() {
-		testSanitize(
-			'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://noahsloan.com/bar.js"> </script><script type="text/javascript">document.write("Baz");</script>',
-			"Fooexternal barBaz",false,null,safari321);
-	});
+	// test("all", function() {
+	// 	testSanitize(
+	// 		'<script type="text/javascript" src="foo.js"> </script><script type="text/javascript" src="http://noahsloan.com/bar.js"> </script><script type="text/javascript">document.write("Baz");</script>',
+	// 		"Fooexternal barBaz",false,null,safari321);
+	// });
 
-	test("nested", function() {
-		testSanitize(
-			'Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"bar.js\\"> </scr"+"ipt>Bar");</script>Baz',
-			"FooBarbArexternal barbArBarBaz",false,null,safari321);
-	});
+	// test("nested", function() {
+	// 	testSanitize(
+	// 		'Foo<script type="text/javascript">document.write("Bar<scrip"+"t type=\\"text/javascript\\" src=\\"bar.js\\"> </scr"+"ipt>Bar");</script>Baz',
+	// 		"FooBarbArexternal barbArBarBaz",false,null,safari321);
+	// });
 
 	test("nested - no xdomain", function() {
 		testSanitize(
@@ -127,34 +127,34 @@ require(['jquery','../writeCapture2','qunit/qunit'],function($,wc) {
 			"FooBarbArFoobArBarBaz",false);
 	});
 
-	test("deeply nested",function() {
-		testSanitize(
-			'<script src="http://noahsloan.com/test/a.js"> </script>',
-			"Boo!Booooooring!",false);
-	});
+	// test("deeply nested",function() {
+	// 	testSanitize(
+	// 		'<script src="http://noahsloan.com/test/a.js"> </script>',
+	// 		"Boo!Booooooring!",false);
+	// });
 
-	test("2x xdomain sanitize",function() {
-		expect(6);
-		var order = 1;
-		stop();
-		$('#foo').empty();
-		$('#foo').write('Foo<script type="text/javascript" src="http://noahsloan.com/wc2x/foo.js"></script>Baz',function() {
-			$('#foo').find('script').remove();
-			equals(trim($('#foo').text()),'FooBarBaz');
-			equals(order++,1,"order");
-			$('#bar').write('Qux<script type="text/javascript" src="http://noahsloan.com/wc2x/bar.js"></script>Quxxx',function() {
-				$('#bar').find('script').remove();
-				equals(trim($('#bar').text()),'QuxQuxxQuxxx');
-				equals(order++,2,"order");
-				$('#baz').write('<script type="text/javascript" src="http://noahsloan.com/wc2x/baz.js"></script>',function() {
-					$('#baz').find('script').remove();
-					equals(trim($('#baz').text()),'Baz');
-					equals(order++,3,"order");
-					start();
-				});
-			});
-		});
-	});
+	// test("2x xdomain sanitize",function() {
+	// 	expect(6);
+	// 	var order = 1;
+	// 	stop();
+	// 	$('#foo').empty();
+	// 	$('#foo').write('Foo<script type="text/javascript" src="http://noahsloan.com/wc2x/foo.js"></script>Baz',function() {
+	// 		$('#foo').find('script').remove();
+	// 		equals(trim($('#foo').text()),'FooBarBaz');
+	// 		equals(order++,1,"order");
+	// 		$('#bar').write('Qux<script type="text/javascript" src="http://noahsloan.com/wc2x/bar.js"></script>Quxxx',function() {
+	// 			$('#bar').find('script').remove();
+	// 			equals(trim($('#bar').text()),'QuxQuxxQuxxx');
+	// 			equals(order++,2,"order");
+	// 			$('#baz').write('<script type="text/javascript" src="http://noahsloan.com/wc2x/baz.js"></script>',function() {
+	// 				$('#baz').find('script').remove();
+	// 				equals(trim($('#baz').text()),'Baz');
+	// 				equals(order++,3,"order");
+	// 				start();
+	// 			});
+	// 		});
+	// 	});
+	// });
 
 	test('incomplete HTML inside a written script',function() {
 		// TODO what if the writer needs text from a subwriter? is that possible?
@@ -165,6 +165,16 @@ require(['jquery','../writeCapture2','qunit/qunit'],function($,wc) {
 		stop();
 		$('#foo').empty().write('<script><!--//<![CDATA[\n\ndocument.write("<scrip"+"t type=\\"text/javascript\\" src=\\"baz.js\\"> </scr"+"ipt>");\n//]]>--></script>',function() {
 			equals(trim($('#foo').find('script').remove().end().text()),'bArFoobAr');
+			start();
+		});
+	});
+
+	test('object tags',function() {
+		expect(1);
+		stop();
+		$('#foo').empty().write('<script>document.write(\'<object><embed id="foo"></object>\');</script>',function() {
+			equals($('#foo').find('object').html().replace(/\s+/g,'').toLowerCase(),
+					'<embedid="foo">','can append embed tags');
 			start();
 		});
 	});
