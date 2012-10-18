@@ -1,3 +1,5 @@
+NEWER! Checkout [PostScribe](https://github.com/krux/postscribe/)! It's [awesome](https://groups.google.com/d/topic/writecapturejs-users/XV_09Fpfc94/discussion).
+
 NEW! Checkout [this branch](https://github.com/iamnoah/writeCapture/tree/writeCapture2) for a completely rewritten writeCapture that should be much more compatible with a greater variety of scripts.
 
 # Usage Summary #
