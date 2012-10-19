@@ -11,13 +11,22 @@
  * that document.write is redirected into the element.
  */
 (function(define){
+	"use strict";
+	/*global document window setTimeout */
 
-	var console = this.console || {log:function(){}};
+	var console = window.console || {log:function(){}};
+
+	var log = console.log;
+	console.log = function() {
+		if(writerFor.debug) {
+			log.apply(this,arguments);
+		}
+	};
 
 	// feature test for how we create script tags
 	var scriptEval = (function() {
 		var script = document.createElement("script");
-		var id = "script" + (new Date).getTime();
+		var id = "script" + (new Date()).getTime();
 		var root = document.documentElement;
 
 		script.type = "text/javascript";
@@ -327,7 +336,7 @@
 	function object(obj) {
 		function F() {}
 		F.prototype = obj;
-		return new F;
+		return new F();
 	}
 
 	var queue = [], writing;
@@ -372,6 +381,6 @@
 	if (typeof exports === 'object') {
 		module.exports = factory(require(deps[0]));
 	} else {
-		this.writeCapture = factory(this.elementWrite);
+		window.writeCapture = factory(window.elementWrite);
 	}
 });
