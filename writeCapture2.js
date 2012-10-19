@@ -57,7 +57,11 @@
 	 * at the end.
 	 */
 	function writerFor(element,onDone) {
-		var writer, capturing, script,
+		var writer, capturing, script, html,
+			// XXX IE will throw security errors if we try to manipulate an object or embed
+			// this falg tells us that no DOM manipulation is allowed, so we will buffer
+			// and use innerHTML instead
+			noDOM = 0,
 			// XXX some stupid scripts will write noscript tags, which <IE9 doesn't like
 			// so we have to ignore them
 			noscript,
@@ -83,6 +87,24 @@
 					capturing = attrs || {};
 					return false;
 				}
+				// if we encounter an object or embed tag, buffer the HTML
+				if(noDOM || /^(object|embed)$/i.test(tag)) {
+					html = (noDOM ? html : '') + '<'+tag;
+
+					for ( var i = 0; i < attrs.length; i++ )
+						html += " " + attrs[i].name + '="' + attrs[i].escaped + '"';
+
+					html += ">";
+
+					// if it was an unwrapped bodyless tag, we're done
+					if(unary && !noDOM) {
+						state.stack.last().innerHTML += html;
+					} else if(!unary) {
+					// otherwise, count the open tags
+						noDOM++;
+					}
+					return false;
+				}
 				if(tag.toLowerCase() === 'noscript') {
 					noscript = true;
 					return false;
@@ -92,6 +114,10 @@
 				}
 			},
 			chars: function(text,state) {
+				if(noDOM) {
+					html += text;
+					return false;
+				}
 				// XXX ignore noscript tags since they have no effect
 				if(noscript) return false;
 				// XXX we can't write characters inside an iframe, so ignore them (probably just whitespace)
@@ -104,6 +130,15 @@
 				}
 			},
 			end: function(tag,state) {
+				// might be buffering HTML
+				if(noDOM) {
+					html += "</" + tag + ">";
+					// if this is the last tag we can't manipulate, append it to the parent
+					if(!--noDOM) {
+						state.stack.last().innerHTML += html;
+					}
+					return false;
+				}
 				// if we're inside a noscript tag, ignore everything until we
 				// hit a closing noscript tag
 				if(noscript) {
