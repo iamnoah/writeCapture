@@ -148,6 +148,7 @@
 				// clear the iframe flag once we're out of it
 				if(iframe) {
 					iframe = tag.toLowerCase() !== 'iframe';
+					return false;
 				}
 				if(capturing) {
 					var attrs = capturing;
