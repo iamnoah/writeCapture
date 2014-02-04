@@ -45,15 +45,21 @@
 			 */
 			replaceWith: function(selector,content) {
 				// jQuery 1.4? has a bug in replaceWith so we can't use it directly
-				var el = jQuery(selector)[0];
+				if(typeof(selector) == "string"){
+				  var el = document.getElementById(selector.replace(/#/,''));
+			  } else {
+				  var el = jQuery(selector)[0];
+				}
 				var next = el.nextSibling, parent = el.parentNode;
 
 				jQuery(el).remove();
 
 				if ( next ) {
 					jQuery(next).before( content );
-				} else {
+				} else if (parent) {
 					jQuery(parent).append( content );
+				} else {
+				  jQuery(el).append( content );
 				}
 			},
 
