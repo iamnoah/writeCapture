@@ -1,28 +1,6 @@
 (function(global) {
 	var sup = global.writeCaptureSupport  = global.writeCaptureSupport || {};
-	// scriptEval & globalEval copied almost verbatim from jQuery 1.3.2
-	var scriptEval = (function() {
-		var script = document.createElement("script");
-		var id = "script" + (new Date).getTime();
-		var root = document.documentElement;
-		
-		script.type = "text/javascript";
-		try {
-			script.appendChild( document.createTextNode( "window." + id + "=1;" ) );
-		} catch(e){}
 
-		root.insertBefore( script, root.firstChild );
-
-		// Make sure that the execution of code works by injecting a script
-		// tag with appendChild/createTextNode
-		// (IE doesn't support this, fails, and uses .text instead)
-		if ( window[ id ] ) {
-			delete window[ id ];
-			return true;
-		}
-		return false;
-	})();
-	
 	function attrPattern(name) {
 		return new RegExp(name+'=(?:(["\'])([\\s\\S]*?)\\1|([^\\s>]+))','i');
 	}
@@ -46,25 +24,15 @@
 			lang.toLowerCase().indexOf('javascript') !== -1
 	}
 
+	// the code in this function is copied almost verbatim from jQuery 1.6.2
 	function globalEval(data) {
-	if ( data && /\S/.test(data) ) {
-			// Inspired by code by Andrea Giammarchi
-			// http://webreflection.blogspot.com/2007/08/global-scope-evaluation-and-dom.html
-			var head = document.getElementsByTagName("head")[0] || document.documentElement,
-				script = document.createElement("script");
+		if ( data && /\S/.test(data) ) {
+			( global.execScript || function( data ) {
+				global[ "eval" ].call( global, data );
+			} )( data );
+		}
+	}
 
-			script.type = "text/javascript";
-			if ( scriptEval )
-				script.appendChild( document.createTextNode( data ) );
-			else
-				script.text = data;
-
-			// Use insertBefore instead of appendChild  to circumvent an IE6 bug.
-			// This arises when a base node is used (#2709).
-			head.insertBefore( script, head.firstChild );
-			head.removeChild( script );
-		}    
-    }
 	global.writeCaptureSupport = {
 		_original: global.writeCaptureSupport,
 		noConflict: function() {
